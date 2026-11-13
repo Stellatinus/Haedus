@@ -2774,3 +2774,9 @@ button.danger:focus-visible {
   color: var(--ok-text);
   font-weight: 700;
 }
+
+.error-boundary {
+  margin: 24px auto;
+  max-width: 480px;
+  text-align: center;
+}

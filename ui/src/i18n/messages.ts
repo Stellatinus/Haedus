@@ -201,6 +201,8 @@ const it = {
   updatesAutoText: 'Contatta GitHub (solo il tuo indirizzo IP è visibile, nessun audio né testo). Se è spento, la rete si usa solo quando premi «Controlla aggiornamenti».',
   version: 'Versione {version}',
   desktopOnly: 'Haedus deve essere avviato dall’applicazione desktop.',
+  renderError: 'Questa schermata ha avuto un problema e non può essere mostrata. I tuoi file non sono stati toccati.',
+  renderRetry: 'Riprova',
 
   // Motivazioni della raccomandazione
   reason_ram_limit: 'RAM totale {total}: si usano modelli che richiedono al massimo {limit}.',
@@ -622,6 +624,8 @@ const en: Record<MessageKey, string> = {
   updatesAutoText: 'Contacts GitHub (only your IP address is visible, no audio or text). When off, the network is used only when you press “Check for updates”.',
   version: 'Version {version}',
   desktopOnly: 'Haedus must be started from the desktop application.',
+  renderError: 'This screen ran into a problem and cannot be shown. Your files have not been touched.',
+  renderRetry: 'Try again',
 
   reason_ram_limit: '{total} total RAM: using models that need at most {limit}.',
   reason_cpu_budget: '{cores} logical cores: the heaviest model suited to this processor is {model}.',

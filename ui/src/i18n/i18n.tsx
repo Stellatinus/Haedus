@@ -56,6 +56,9 @@ export function createI18n(locale: Locale) {
       : t('etaHours', { hours: Math.floor(minutes / 60), minutes: minutes % 60 });
   };
 
+  /** Numero con al massimo un decimale, nella lingua dell'interfaccia (non in quella del sistema). */
+  const formatNumber = (value: number) => value.toLocaleString(numberLocale, { maximumFractionDigits: 1 });
+
   const formatDate = (iso: string) => new Date(iso).toLocaleString(numberLocale, { dateStyle: 'medium', timeStyle: 'short' });
 
   /** Data breve per le schede, es. "15 ott". */
@@ -114,7 +117,7 @@ export function createI18n(locale: Locale) {
     return t(`issue_${issue}` as MessageKey);
   };
 
-  return { locale, t, languageName, formatBytes, formatMemory, formatDuration, formatRemaining, formatDate, formatShortDate, describeError, reason, issueText };
+  return { locale, t, languageName, formatBytes, formatMemory, formatDuration, formatRemaining, formatNumber, formatDate, formatShortDate, describeError, reason, issueText };
 }
 
 export type I18n = ReturnType<typeof createI18n>;

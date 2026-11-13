@@ -15,9 +15,9 @@ export function ModelInfoTip({
   /** Affidabilità misurata dal Test bench per lingua; vuoto se il modello non è stato misurato con i brani ufficiali. */
   measured?: BenchmarkReliability[];
 }) {
-  const { t, formatBytes, languageName } = useI18n();
+  const { t, formatBytes, formatNumber, languageName } = useI18n();
   const percent = (value?: number) =>
-    value === undefined ? "—" : `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(value)}%`;
+    value === undefined ? "—" : `${formatNumber(value)}%`;
   const [open, setOpen] = useState(false);
   const id = useId();
   const accuracy = model.accuracy;
@@ -67,7 +67,7 @@ export function ModelInfoTip({
         ) : (
           <span>
             {accuracy
-              ? `${t("accuracyBadge", { percent: new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(accuracy.percent) })} · ${t(
+              ? `${t("accuracyBadge", { percent: formatNumber(accuracy.percent) })} · ${t(
                   "accuracyTip",
                   {
                     metric: accuracy.metric,

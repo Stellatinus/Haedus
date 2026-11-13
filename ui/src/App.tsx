@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { BridgeClient } from './bridge/client';
 import type { ExportFormat } from './bridge/protocol';
+import { ErrorBoundary } from './ErrorBoundary';
 import { FileList, type Selection } from './components/FileList';
 import { HistoryPanel } from './components/HistoryPanel';
 import { Icon, type IconName } from './components/Icon';
@@ -202,7 +203,9 @@ function Shell({ app }: { app: HaedusState }) {
                 />
               )
             ) : (
-              <Workbench app={app} selection={selection} onDirtyChange={setDirty} onCopied={() => showToast(t('copied'))} />
+              <ErrorBoundary key={selection === null ? 'none' : JSON.stringify(selection)} label={t('renderError')} retry={t('renderRetry')}>
+                <Workbench app={app} selection={selection} onDirtyChange={setDirty} onCopied={() => showToast(t('copied'))} />
+              </ErrorBoundary>
             ))}
           {tab === 'history' && (
             <HistoryPanel

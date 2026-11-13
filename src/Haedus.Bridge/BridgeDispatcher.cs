@@ -575,8 +575,9 @@ public sealed partial class BridgeDispatcher : IDisposable
         {
             return History().FindAudio(id) is { } path && AudioMedia.ContentType(path) is { } type ? (path, type) : null;
         }
-        catch (HaedusException)
+        catch (Exception ex) when (ex is HaedusException or IOException or UnauthorizedAccessException or JsonException)
         {
+            // Chi serve l'audio (WebView, server) non deve mai vedere un'eccezione: senza audio l'editor funziona lo stesso.
             return null;
         }
     }

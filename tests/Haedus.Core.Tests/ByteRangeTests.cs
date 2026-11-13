@@ -59,6 +59,30 @@ public sealed class AudioResponseTests : IDisposable
     }
 
     [Fact]
+    public void Body_is_seekable_and_reports_its_length_for_WebView2()
+    {
+        // WebView2 avvolge il corpo in un IRandomAccessStream e ne chiede la dimensione (issue #59).
+        using var body = AudioResponse.Create(Sample(), "audio/mpeg", "GET", "bytes=10-19").Body!;
+
+        Assert.True(body.CanSeek);
+        Assert.Equal(10, body.Length);
+        body.Seek(5, SeekOrigin.Begin);
+        Assert.Equal(15, body.ReadByte());
+        body.Position = 0;
+        Assert.Equal(10, body.ReadByte());
+        body.Seek(-1, SeekOrigin.End);
+        Assert.Equal(19, body.ReadByte());
+        Assert.Equal(-1, body.ReadByte());
+    }
+
+    [Fact]
+    public void Unreadable_path_gives_404_instead_of_throwing()
+    {
+        // Una cartella al posto del file: FileInfo.Exists è false, FileStream lancerebbe UnauthorizedAccessException.
+        Assert.Equal(404, AudioResponse.Create(_dir.Path, "audio/mpeg", "GET", null).Status);
+    }
+
+    [Fact]
     public void Range_request_returns_206_with_exact_bytes()
     {
         var response = AudioResponse.Create(Sample(), "audio/mpeg", "GET", "bytes=10-19");

@@ -54,11 +54,24 @@ public static class WebViewSecurity
             {
                 hybrid.WebResourceRequested += (_, e) =>
                 {
-                    e.Headers.TryGetValue("Range", out var range);
-                    if (TryServeAudio(e.Uri, e.Method, range, dispatcher.OpenHistoryAudio) is not { } response)
-                        return;
-                    e.Handled = true;
-                    e.SetResponse(response.Status, response.Reason, response.Headers, response.Body ?? Stream.Null);
+                    // Un'eccezione che esce da questo evento chiude l'intera app (issue #59): ogni errore diventa una risposta HTTP.
+                    try
+                    {
+                        e.Headers.TryGetValue("Range", out var range);
+                        if (TryServeAudio(e.Uri, e.Method, range, dispatcher.OpenHistoryAudio) is not { } response)
+                            return;
+                        e.Handled = true;
+                        e.SetResponse(response.Status, response.Reason, response.Headers, response.Body ?? Stream.Null);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "Risposta audio non riuscita");
+                        if (IsLocal(e.Uri?.GetLeftPart(UriPartial.Authority) + "/") && e.Uri!.AbsolutePath.StartsWith("/audio/", StringComparison.Ordinal))
+                        {
+                            e.Handled = true;
+                            e.SetResponse(500, "Internal Server Error", new Dictionary<string, string>(), Stream.Null);
+                        }
+                    }
                 };
             }
 
@@ -102,46 +115,5 @@ public static class WebViewSecurity
             };
         });
 #endif
-    }
-}
-
-/// <summary>Espone solo <c>count</c> byte di un file a partire da <c>start</c> (corpo di una risposta 206).</summary>
-internal sealed class SliceStream : Stream
-{
-    private readonly Stream _inner;
-    private long _remaining;
-
-    public SliceStream(Stream inner, long start, long count)
-    {
-        _inner = inner;
-        _remaining = count;
-        _inner.Seek(start, SeekOrigin.Begin);
-    }
-
-    public override bool CanRead => true;
-    public override bool CanSeek => false;
-    public override bool CanWrite => false;
-    public override long Length => throw new NotSupportedException();
-    public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
-
-    public override int Read(byte[] buffer, int offset, int count)
-    {
-        if (_remaining <= 0)
-            return 0;
-        var read = _inner.Read(buffer, offset, (int)Math.Min(count, _remaining));
-        _remaining -= read;
-        return read;
-    }
-
-    public override void Flush() { }
-    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
-    public override void SetLength(long value) => throw new NotSupportedException();
-    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
-
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing)
-            _inner.Dispose();
-        base.Dispose(disposing);
     }
 }

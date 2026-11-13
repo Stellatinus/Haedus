@@ -22,7 +22,7 @@ public sealed record AudioResponse(int Status, string Reason, IReadOnlyDictionar
                 return NotFound;
             length = info.Length;
         }
-        catch (IOException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or NotSupportedException)
         {
             return NotFound;
         }
@@ -53,45 +53,73 @@ public sealed record AudioResponse(int Status, string Reason, IReadOnlyDictionar
             var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
             return new AudioResponse(status, reason, headers, new SliceStream(file, start, count));
         }
-        catch (IOException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or NotSupportedException)
         {
             return NotFound;
         }
     }
 
-    /// <summary>Espone solo <c>count</c> byte di un file a partire da <c>start</c>.</summary>
+    /// <summary>
+    /// Espone solo <c>count</c> byte di un file a partire da <c>start</c>. È scorrevole (Length, Position, Seek):
+    /// WebView2 trasforma il corpo in un IRandomAccessStream e ne chiede la dimensione, e uno stream non scorrevole
+    /// lancia NotSupportedException dentro il callback nativo (issue #59).
+    /// </summary>
     private sealed class SliceStream : Stream
     {
         private readonly Stream _inner;
-        private long _remaining;
+        private readonly long _start;
+        private readonly long _count;
+        private long _position;
 
         public SliceStream(Stream inner, long start, long count)
         {
             _inner = inner;
-            _remaining = count;
-            _inner.Seek(start, SeekOrigin.Begin);
+            _start = start;
+            _count = count;
         }
 
         public override bool CanRead => true;
-        public override bool CanSeek => false;
+
+        public override bool CanSeek => true;
+
         public override bool CanWrite => false;
-        public override long Length => throw new NotSupportedException();
-        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+
+        public override long Length => _count;
+
+        public override long Position
+        {
+            get => _position;
+            set => _position = Math.Clamp(value, 0, _count);
+        }
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            if (_remaining <= 0)
+            var remaining = _count - _position;
+            if (remaining <= 0 || count <= 0)
                 return 0;
-            var read = _inner.Read(buffer, offset, (int)Math.Min(count, _remaining));
-            _remaining -= read;
+            _inner.Seek(_start + _position, SeekOrigin.Begin);
+            var read = _inner.Read(buffer, offset, (int)Math.Min(count, remaining));
+            _position += read;
             return read;
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            var target = origin switch
+            {
+                SeekOrigin.Begin => offset,
+                SeekOrigin.Current => _position + offset,
+                _ => _count + offset,
+            };
+            if (target < 0)
+                throw new IOException("Posizione prima dell'inizio dello stream.");
+            _position = Math.Min(target, _count);
+            return _position;
         }
 
         public override void Flush()
         {
         }
-
-        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
 
         public override void SetLength(long value) => throw new NotSupportedException();
 
