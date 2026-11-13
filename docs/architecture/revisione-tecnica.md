@@ -80,5 +80,5 @@ Se si vogliono pareri indipendenti, ad esempio agenti separati per area o reviso
   - redistribuzione dei componenti Microsoft (VC++, Windows App SDK);
   - eventuale FFmpeg in futuro;
   - modelli di diarization in V2, spesso con termini restrittivi.
-- La licenza del progetto CodexVTT è ancora da definire.
+- La licenza del progetto Haedus è ancora da definire.
 - **→ [licenze](licenze.md)**

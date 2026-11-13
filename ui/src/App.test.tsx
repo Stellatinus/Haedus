@@ -200,7 +200,7 @@ describe('App', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Windows ha negato la scrittura in questa cartella.');
     expect(screen.getByText(/«Accesso alle cartelle controllato» è attivo/)).toBeInTheDocument();
     expect(screen.getByText(/Consenti app tramite Accesso alle cartelle controllato/)).toBeInTheDocument();
-    expect(screen.getByText(/CodexVtt\.App\.exe$/)).toBeInTheDocument();
+    expect(screen.getByText(/Haedus\.App\.exe$/)).toBeInTheDocument();
   });
 
   it('keeps a green check next to the folder once it passed the test', async () => {
@@ -220,11 +220,11 @@ describe('App', () => {
     await user.click(await screen.findByRole('button', { name: 'Impostazioni' }));
 
     const box = await screen.findByRole('checkbox', { name: /scheda video/ });
-    expect(screen.queryByText(/Riavvia CodexVTT per applicare/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Riavvia Haedus per applicare/)).not.toBeInTheDocument();
     await user.click(box);
-    expect(await screen.findByText(/Riavvia CodexVTT per applicare/)).toBeInTheDocument();
+    expect(await screen.findByText(/Riavvia Haedus per applicare/)).toBeInTheDocument();
     await user.click(box);
-    await waitFor(() => expect(screen.queryByText(/Riavvia CodexVTT per applicare/)).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText(/Riavvia Haedus per applicare/)).not.toBeInTheDocument());
   });
 
   it('lets the user pick a color theme and applies it to the document', async () => {
@@ -377,7 +377,7 @@ describe('App', () => {
     expect(within(reliability).getAllByRole('columnheader', { name: 'Rumore' })).toHaveLength(2);
 
     const tip = within(screen.getByRole('listitem', { name: 'Base' })).getByRole('tooltip', { hidden: true });
-    expect(tip).toHaveTextContent(/misurata da CodexVTT su questo PC/);
+    expect(tip).toHaveTextContent(/misurata da Haedus su questo PC/);
     expect(tip).toHaveTextContent(/Italiano: pulito .*% · rumore .*% · media .*%/);
     expect(tip).toHaveTextContent(/Inglese: pulito/);
   });
@@ -450,7 +450,7 @@ describe('App', () => {
     expect(screen.getByTitle('ggml-base.bin')).toHaveTextContent('Base');
     const segments = screen.getAllByRole('textbox', { name: /^Testo del segmento/ });
     expect(segments.map((s) => s.textContent).join(' ')).toBe(
-      'Buongiorno a tutti e grazie per essere qui. Oggi parliamo del rilascio della prima versione di CodexVTT. Tutto il lavoro avviene in locale, sul vostro computer.',
+      'Buongiorno a tutti e grazie per essere qui. Oggi parliamo del rilascio della prima versione di Haedus. Tutto il lavoro avviene in locale, sul vostro computer.',
     );
 
     await user.click(screen.getByRole('button', { name: 'Esporta SRT' }));
@@ -465,7 +465,7 @@ describe('App', () => {
     expect(await screen.findByText('Trascrizione salvata nella cronologia.')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Cronologia' }));
-    expect(screen.getByText('C:\\Users\\utente\\Documents\\CodexVTT\\history')).toBeInTheDocument();
+    expect(screen.getByText('C:\\Users\\utente\\Documents\\Haedus\\history')).toBeInTheDocument();
     const item = await screen.findByRole('listitem', { name: 'riunione.mp3' });
     expect(within(item).getByText(/Buongiorno a tutti/)).toBeInTheDocument();
 
@@ -705,7 +705,7 @@ describe('Nuovi modelli e GPU', () => {
     // L'affidabilità sta nella «i» del modello, non più come testo fisso nella scheda.
     const tip = within(parakeet).getByRole('tooltip', { hidden: true });
     expect(tip).toHaveTextContent('Affidabilità ~97%');
-    expect(tip).toHaveTextContent('non misurato da CodexVTT');
+    expect(tip).toHaveTextContent('non misurato da Haedus');
     expect(tip).toHaveTextContent('by NVIDIA, licensed under CC-BY-4.0');
 
     const base = screen.getByRole('listitem', { name: 'Base' });

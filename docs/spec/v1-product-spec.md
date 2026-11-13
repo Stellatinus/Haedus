@@ -1,4 +1,4 @@
-# Specifica di prodotto — CodexVTT V1 (Windows)
+# Specifica di prodotto — Haedus V1 (Windows)
 
 - Issue: #2
 - Stato: Proposta; decisioni del maintainer del 2026-10-14 incorporate (Windows 11, 4 ore, nessuna traduzione, cronologia, interfaccia IT/EN, installer non firmato)
@@ -8,7 +8,7 @@ I requisiti hanno identificativi stabili (`REQ-xxx`) usati dai test e dalla chec
 
 ## 1. Obiettivo e criterio di successo
 
-Un utente Windows installa CodexVTT, installa o seleziona un modello Whisper locale, carica un file audio supportato e ottiene una trascrizione verificabile **senza alcun servizio di inferenza online**, anche con la rete disattivata dopo l'installazione del modello.
+Un utente Windows installa Haedus, installa o seleziona un modello Whisper locale, carica un file audio supportato e ottiene una trascrizione verificabile **senza alcun servizio di inferenza online**, anche con la rete disattivata dopo l'installazione del modello.
 
 ## 2. Persone e scenari
 
@@ -72,7 +72,7 @@ Flussi principali:
 - **REQ-041** L'annullamento ferma il lavoro in pochi secondi e libera le risorse.
 - **REQ-042** Il risultato mostra il testo completo e la vista a segmenti con timestamp.
 - **REQ-043** Avviso permanente: Whisper può sbagliare o inventare frasi su silenzi e musica.
-- **REQ-044** Cronologia: ogni trascrizione completata viene salvata **automaticamente** in una **cartella visibile** sul disco (default `Documenti\CodexVTT\history`, modificabile nelle impostazioni).
+- **REQ-044** Cronologia: ogni trascrizione completata viene salvata **automaticamente** in una **cartella visibile** sul disco (default `Documenti\Haedus\history`, modificabile nelle impostazioni).
   - Ogni trascrizione ha **file propri** con lo stesso nome base `AAAA-MM-GG HH.mm.ss - <nome audio>`: un `.txt` leggibile (con intestazione) e un `.json` con segmenti e metadati, usato per riaprirla.
   - La sezione Cronologia elenca le trascrizioni (dalla più recente), le riapre, le esporta in TXT/SRT/VTT e le elimina (entrambi i file, dopo conferma); un pulsante apre la cartella in Esplora file.
   - Se il salvataggio fallisce (cartella non scrivibile) la trascrizione resta visibile e compare l'errore `history_save_failed`; se è stato possibile metterla al sicuro nella cartella dati locale (`history-recovery`, tipico con "Accesso alle cartelle controllato" di Defender) l'errore è `history_folder_blocked`, con il pulsante **Cambia cartella…**.
@@ -109,7 +109,7 @@ Ogni errore mostra un titolo, l'azione correttiva e il codice. I testi sono in `
 | `runtime_unavailable` | Motore non avviabile | Installare VC++ Redistributable |
 | `transcription_failed` | Trascrizione non riuscita | Riprovare o cambiare modello |
 | `export_failed` | Impossibile salvare | Altra cartella o nome |
-| `history_folder_blocked` | Defender impedisce di scrivere nella cronologia; copia in `history-recovery` | Consentire CodexVTT o cambiare cartella |
+| `history_folder_blocked` | Defender impedisce di scrivere nella cronologia; copia in `history-recovery` | Consentire Haedus o cambiare cartella |
 | `history_save_failed` / `history_not_found` | Cronologia non salvabile / voce non trovata | Controllare la cartella della cronologia |
 
 ## 11. Accessibilità e lingua dell'interfaccia

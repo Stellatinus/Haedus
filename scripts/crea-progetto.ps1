@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Crea su GitHub etichette, milestone e issue iniziali di CodexVTT (da docs/progetto/progetto.json).
+  Crea su GitHub etichette, milestone e issue iniziali di Haedus (da docs/progetto/progetto.json).
 
 .DESCRIPTION
   Si può rilanciare senza duplicare nulla: ciò che esiste già (per nome o titolo) viene saltato.
@@ -9,8 +9,8 @@
   Richiede GitHub CLI autenticata (`gh auth login`) con permesso di scrittura sul repository.
 
 .EXAMPLE
-  .\scripts\crea-progetto.ps1 -Repo CodexCircle/CodexVTT -DryRun   # mostra cosa creerebbe
-  .\scripts\crea-progetto.ps1 -Repo CodexCircle/CodexVTT
+  .\scripts\crea-progetto.ps1 -Repo Stellatinus/Haedus -DryRun   # mostra cosa creerebbe
+  .\scripts\crea-progetto.ps1 -Repo Stellatinus/Haedus
 #>
 [CmdletBinding()]
 param(

@@ -4,7 +4,7 @@ Issue: #1. La specifica di dettaglio è in #2.
 
 ## Criterio di successo
 
-Un utente Windows installa CodexVTT, installa o seleziona un modello Whisper locale, carica un file audio supportato e ottiene una trascrizione verificabile **con la rete disattivata** dopo l'installazione del modello.
+Un utente Windows installa Haedus, installa o seleziona un modello Whisper locale, carica un file audio supportato e ottiene una trascrizione verificabile **con la rete disattivata** dopo l'installazione del modello.
 
 ## In scope V1
 
@@ -16,7 +16,7 @@ Un utente Windows installa CodexVTT, installa o seleziona un modello Whisper loc
 | Trascrizione | whisper.cpp/Whisper.net su CPU (+ NoAvx); lingua automatica o manuale; progresso; annullamento; un job alla volta; modello usato registrato | #3 |
 | Audio | WAV, MP3, M4A/AAC, WMA, FLAC (+ OGG/Opus se il codec è presente); validazione; file lunghi | #5 |
 | Output | Visualizzazione testo; copia; export TXT, SRT e VTT dai segmenti | #5, #6 |
-| Cronologia | Salvataggio automatico di ogni trascrizione in file propri (`.txt` + `.json`) in una cartella visibile (`Documenti\CodexVTT\history`, modificabile); riapertura, export, eliminazione | #2, #6 |
+| Cronologia | Salvataggio automatico di ogni trascrizione in file propri (`.txt` + `.json`) in una cartella visibile (`Documenti\Haedus\history`, modificabile); riapertura, export, eliminazione | #2, #6 |
 | Privacy | Nessuna rete salvo download e aggiornamenti richiesti; nessuna telemetria; log locali senza contenuti | ADR-0006, #9 |
 | Distribuzione | Installer Velopack non firmato, upgrade, uninstall, prerequisiti inclusi | #8 |
 | Qualità | Test unitari, di integrazione e di architettura; benchmark; test offline e di non-esfiltrazione; acceptance run | #9 |

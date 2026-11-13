@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Haedus.Core\Haedus.Core.csproj" />
+    <ProjectReference Include="..\..\src\Haedus.Transcription.Whisper\Haedus.Transcription.Whisper.csproj" />
+    <ProjectReference Include="..\..\src\Haedus.Transcription.Sherpa\Haedus.Transcription.Sherpa.csproj" />
+    <ProjectReference Include="..\..\src\Haedus.Audio.Windows\Haedus.Audio.Windows.csproj" />
+    <ProjectReference Include="..\..\src\Haedus.Audio.FFmpeg\Haedus.Audio.FFmpeg.csproj" />
+    <ProjectReference Include="..\..\src\Haedus.Updates\Haedus.Updates.csproj" />
+    <ProjectReference Include="..\..\src\Haedus.Models.Download\Haedus.Models.Download.csproj" />
+    <ProjectReference Include="..\..\src\Haedus.Bridge\Haedus.Bridge.csproj" />
+  </ItemGroup>
+
+</Project>

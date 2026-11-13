@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from 'react';
 import type { BenchmarkEntry, BenchmarkReferenceInfo, BenchmarkScenario, BenchmarkStale } from '../bridge/protocol';
 import { useI18n, type MessageKey } from '../i18n/i18n';
-import type { CodexVttState } from '../state/useCodexVtt';
+import type { HaedusState } from '../state/useHaedus';
 import { ConfirmDialog } from './ConfirmDialog';
 
 interface ModelRow {
@@ -41,7 +41,7 @@ function combine(entries: BenchmarkEntry[]): ModelRow[] {
  * questo PC. I brani ufficiali sono in italiano e in inglese, puliti e con rumore, così l'affidabilità si legge per lingua
  * e per condizione. Parte solo da un clic, si può annullare e scarica i brani ufficiali solo se lo chiedi.
  */
-export function BenchPanel({ app }: { app: CodexVttState }) {
+export function BenchPanel({ app }: { app: HaedusState }) {
   const { t, formatShortDate, formatBytes, languageName } = useI18n();
   const [reference, setReference] = useState<BenchmarkReferenceInfo>();
   const [asking, setAsking] = useState(false);

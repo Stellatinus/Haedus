@@ -1,20 +1,20 @@
 # Politica di sicurezza
 
-CodexVTT trascrive l'audio **sul tuo computer**: l'audio e i testi non vengono inviati a nessun servizio. Le uniche connessioni in uscita sono quelle che avvii tu: il download dei modelli (da Hugging Face, con verifica SHA-256) e, se lo attivi, il controllo degli aggiornamenti su GitHub.
+Haedus trascrive l'audio **sul tuo computer**: l'audio e i testi non vengono inviati a nessun servizio. Le uniche connessioni in uscita sono quelle che avvii tu: il download dei modelli (da Hugging Face, con verifica SHA-256) e, se lo attivi, il controllo degli aggiornamenti su GitHub.
 
 ## Versioni supportate
 
-Le correzioni di sicurezza escono solo per **l'ultima versione pubblicata** (vedi [Releases](https://github.com/CodexCircle/CodexVTT/releases)). Se usi una versione precedente, aggiorna prima di segnalare.
+Le correzioni di sicurezza escono solo per **l'ultima versione pubblicata** (vedi [Releases](https://github.com/Stellatinus/Haedus/releases)). Se usi una versione precedente, aggiorna prima di segnalare.
 
 ## Come segnalare una vulnerabilità
 
 **Non aprire una issue pubblica** per un problema di sicurezza.
 
-Usa la segnalazione privata di GitHub: [Security → Report a vulnerability](https://github.com/CodexCircle/CodexVTT/security/advisories/new). Solo i maintainer possono leggerla.
+Usa la segnalazione privata di GitHub: [Security → Report a vulnerability](https://github.com/Stellatinus/Haedus/security/advisories/new). Solo i maintainer possono leggerla.
 
 Indica, se puoi:
 
-- versione di CodexVTT e sistema operativo (o immagine Docker);
+- versione di Haedus e sistema operativo (o immagine Docker);
 - se usi l'app Windows o la versione server;
 - i passaggi per riprodurre il problema e l'effetto che ha;
 - una tua idea di correzione, se ce l'hai.

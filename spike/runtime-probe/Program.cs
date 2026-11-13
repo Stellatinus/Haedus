@@ -184,7 +184,7 @@ sealed record ProbeOptions(
     bool NetworkCheck)
 {
     public const string Usage =
-        "Uso: codexvtt-runtime-probe --model <ggml.bin> --audio <file.wav 16kHz mono> " +
+        "Uso: haedus-runtime-probe --model <ggml.bin> --audio <file.wav 16kHz mono> " +
         "[--sha256 <hex>] [--language auto|it|en|...] [--threads N] [--gpu] " +
         "[--cancel-after <secondi>] [--json <report.json>] [--network-check]";
 

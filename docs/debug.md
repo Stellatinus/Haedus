@@ -1,23 +1,23 @@
 # Toolset di debug
 
-Strumenti per diagnosticare CodexVTT senza dover riprodurre a schermo (issue #38). Tutto resta locale: nessuna
+Strumenti per diagnosticare Haedus senza dover riprodurre a schermo (issue #38). Tutto resta locale: nessuna
 richiesta di rete aggiuntiva (ADR-0006).
 
 ## Log
 
-- File: `%LOCALAPPDATA%\CodexVTT.Data\logs\codexvtt.log` (rotazione a 2 MB, 5 file).
+- File: `%LOCALAPPDATA%\Haedus.Data\logs\haedus.log` (rotazione a 2 MB, 5 file).
 - Livello minimo, in ordine di precedenza:
   1. argomento `--debug` (equivale a livello `Debug` più log diagnostici della WebView);
-  2. variabile d'ambiente `CODEXVTT_LOG_LEVEL` (`Trace`, `Debug`, `Information`, `Warning`, `Error`);
-  3. variabile `CODEXVTT_DEBUG=1` (equivale a `--debug`);
+  2. variabile d'ambiente `HAEDUS_LOG_LEVEL` (`Trace`, `Debug`, `Information`, `Warning`, `Error`);
+  3. variabile `HAEDUS_DEBUG=1` (equivale a `--debug`);
   4. `DiagnosticLogLevel` in `settings.json`;
   5. default `Information`.
 
 Esempio da terminale (la finestra si apre normalmente):
 
 ```bash
-set CODEXVTT_LOG_LEVEL=Debug
-"%LOCALAPPDATA%\CodexVTT\current\CodexVtt.App.exe"
+set HAEDUS_LOG_LEVEL=Debug
+"%LOCALAPPDATA%\Haedus\current\Haedus.App.exe"
 ```
 
 ### Cosa viene registrato
@@ -35,7 +35,7 @@ set CODEXVTT_LOG_LEVEL=Debug
 Eseguono solo con modelli già installati e verificati, non aprono finestre né rete.
 
 ```bash
-"%LOCALAPPDATA%\CodexVTT\current\CodexVtt.App.exe" --diagnose "C:\percorso\cartella-output"
+"%LOCALAPPDATA%\Haedus\current\Haedus.App.exe" --diagnose "C:\percorso\cartella-output"
 ```
 
 Verifica: runtime WebView2, cartelle scrivibili (root, modelli, log, temp, cronologia), ogni modello installato
@@ -43,7 +43,7 @@ Verifica: runtime WebView2, cartelle scrivibili (root, modelli, log, temp, crono
 un riepilogo. Exit code `0` se tutti i controlli passano, `2` altrimenti, `1` per errori di avvio.
 
 ```bash
-"%LOCALAPPDATA%\CodexVTT\current\CodexVtt.App.exe" --headless-transcribe "C:\audio\file.wav" --model small --format srt --out "C:\output"
+"%LOCALAPPDATA%\Haedus\current\Haedus.App.exe" --headless-transcribe "C:\audio\file.wav" --model small --format srt --out "C:\output"
 ```
 
 Import, trascrizione ed export senza finestra. Opzioni: `--model` (default `small`), `--format txt|srt|vtt`
@@ -51,7 +51,7 @@ Import, trascrizione ed export senza finestra. Opzioni: `--model` (default `smal
 
 ## DevTools
 
-In build Release le DevTools restano disattivate. Con `--debug` o `CODEXVTT_DEBUG=1` vengono abilitate, così da
+In build Release le DevTools restano disattivate. Con `--debug` o `HAEDUS_DEBUG=1` vengono abilitate, così da
 ispezionare la UI quando serve. La scelta è esplicita e non cambia il comportamento predefinito (ADR-0006).
 
 ## Build locale
@@ -63,7 +63,7 @@ cd ui
 npm ci
 npm run build:app
 cd ..
-dotnet build src/CodexVtt.App/CodexVtt.App.csproj -f net10.0-windows10.0.19041.0 -c Release
+dotnet build src/Haedus.App/Haedus.App.csproj -f net10.0-windows10.0.19041.0 -c Release
 ```
 
-Test: `dotnet test tests/CodexVtt.Core.Tests` e `dotnet test tests/CodexVtt.Architecture.Tests`.
+Test: `dotnet test tests/Haedus.Core.Tests` e `dotnet test tests/Haedus.Architecture.Tests`.

@@ -9,9 +9,9 @@
     { "name": "miglioramento", "color": "a2eeef", "description": "Nuova funzione o miglioria" }
   ],
   "milestones": [
-    { "title": "1.0.0 - Primo rilascio pubblico", "description": "Primo rilascio di CodexVTT: nome nuovo, coda batch, server Docker, aggiornamenti da GitHub." },
+    { "title": "1.0.0 - Primo rilascio pubblico", "description": "Primo rilascio di Haedus: nome nuovo, coda batch, server Docker, aggiornamenti da GitHub." },
     { "title": "1.1.0 - Nuovi modelli, GPU e licenza", "description": "Licenza Apache-2.0, Parakeet, Canary, Cohere, scheda video (Vulkan) e catalogo v2." },
-    { "title": "1.2.0 - Nuova interfaccia", "description": "Interfaccia grafica rifatta e identità visiva di CodexVTT." },
+    { "title": "1.2.0 - Nuova interfaccia", "description": "Interfaccia grafica rifatta e identità visiva di Haedus." },
     { "title": "1.3.0 - Server maturo", "description": "Server in Docker pronto per un uso più ampio: coda persistente, HTTPS, immagine pubblicata." }
   ],
   "issues": [
@@ -37,13 +37,13 @@
       "title": "Prova dell'aggiornamento 1.0.0 → 1.0.1 su un'installazione vera",
       "milestone": "1.0.0 - Primo rilascio pubblico",
       "labels": ["bloccante", "aggiornamenti", "infrastruttura"],
-      "body": "Gli aggiornamenti da GitHub (ADR-0008) sono provati con un feed Velopack di prova ma non su una vera installazione.\n\n**Da fare**\n- [ ] `scripts/test-locale.ps1 -Docker -Feed` verde\n- [ ] `scripts/release-locale.ps1 -DryRun`, installare `CodexVTT-win-Setup.exe` su un PC pulito\n- [ ] Pubblicata la 1.0.0 con `scripts/release-locale.ps1` (tag `v1.0.0`)\n- [ ] Preparare 1.0.1 (cambio di `Directory.Build.props` + `docs/releases/1.0.1.md`) e pubblicarla\n- [ ] Nell'app 1.0.0: Impostazioni → Aggiornamenti → Controlla → Installa e riavvia\n- [ ] Verificare che i dati (modelli, cronologia) restino e che il delta sia stato usato\n- [ ] Verificare che con la casella spenta l'app non contatti GitHub (nessuna richiesta all'avvio)"
+      "body": "Gli aggiornamenti da GitHub (ADR-0008) sono provati con un feed Velopack di prova ma non su una vera installazione.\n\n**Da fare**\n- [ ] `scripts/test-locale.ps1 -Docker -Feed` verde\n- [ ] `scripts/release-locale.ps1 -DryRun`, installare `Haedus-win-Setup.exe` su un PC pulito\n- [ ] Pubblicata la 1.0.0 con `scripts/release-locale.ps1` (tag `v1.0.0`)\n- [ ] Preparare 1.0.1 (cambio di `Directory.Build.props` + `docs/releases/1.0.1.md`) e pubblicarla\n- [ ] Nell'app 1.0.0: Impostazioni → Aggiornamenti → Controlla → Installa e riavvia\n- [ ] Verificare che i dati (modelli, cronologia) restino e che il delta sia stato usato\n- [ ] Verificare che con la casella spenta l'app non contatti GitHub (nessuna richiesta all'avvio)"
     },
     {
       "title": "Sostituire logo e riferimenti grafici al vecchio nome",
       "milestone": "1.0.0 - Primo rilascio pubblico",
       "labels": ["ui", "documentazione"],
-      "body": "Il codice e i testi usano il nuovo nome, ma le immagini no.\n\n**Da fare**\n- [ ] `docs/assets/logo.png` (usato dal README)\n- [ ] `src/CodexVtt.App/Resources/AppIcon/appicon.svg` e `appiconfg.svg`\n- [ ] `ui/src/components/Logo.tsx` e le mascotte (`ui/src/mascot`)\n- [ ] Favicon e icona dell'installer Velopack (`vpk pack --icon`)"
+      "body": "Il codice e i testi usano il nuovo nome, ma le immagini no.\n\n**Da fare**\n- [ ] `docs/assets/logo.png` (usato dal README)\n- [ ] `src/Haedus.App/Resources/AppIcon/appicon.svg` e `appiconfg.svg`\n- [ ] `ui/src/components/Logo.tsx` e le mascotte (`ui/src/mascot`)\n- [ ] Favicon e icona dell'installer Velopack (`vpk pack --icon`)"
     },
     {
       "title": "Proteggere main e completare le impostazioni del repository",
@@ -58,7 +58,7 @@
       "body": "La UI servita dal server è stata verificata con test automatici e leggendo il contenuto della pagina, ma non a occhio.\n\n**Da fare**\n- [ ] Aprire `http://localhost:5185/?token=...` da Chrome, Edge e Firefox\n- [ ] Caricare più file, avviare la coda, ricaricare la pagina a lavoro in corso\n- [ ] Scaricare gli export (txt, srt, vtt)\n- [ ] Provare da telefono sulla rete locale\n- [ ] Controllare il layout stretto (mobile) e il tema scuro"
     },
     {
-      "title": "Nuova interfaccia grafica di CodexVTT",
+      "title": "Nuova interfaccia grafica di Haedus",
       "milestone": "1.2.0 - Nuova interfaccia",
       "labels": ["ui", "miglioramento"],
       "body": "Ridisegnare la UI con la nuova identità. La rinomina non ha toccato layout, colori né mascotte.\n\n**Da decidere**\n- [ ] Direzione grafica, palette e tipografia (oggi: Sabbia, Natale, Halloween, Ciliegia)\n- [ ] Layout della schermata di trascrizione e della coda\n- [ ] Versione mobile della UI del server\n- [ ] Accessibilità (i test `axe` esistenti devono restare verdi)"
@@ -67,7 +67,7 @@
       "title": "Mascotte Tina e Giulio: tenerle, sostituirle o renderle opzionali",
       "milestone": "1.2.0 - Nuova interfaccia",
       "labels": ["ui"],
-      "body": "Le mascotte vengono dal progetto precedente. Decidere se fanno parte dell'identità di CodexVTT."
+      "body": "Le mascotte vengono dal progetto precedente. Decidere se fanno parte dell'identità di Haedus."
     },
     {
       "title": "Rivedere i testi italiani e inglesi dopo la rinomina",

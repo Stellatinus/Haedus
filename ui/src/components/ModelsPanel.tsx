@@ -2,12 +2,12 @@ import { useState } from 'react';
 import type { ModelInfo } from '../bridge/protocol';
 import { useI18n, type MessageKey } from '../i18n/i18n';
 import { modelLimits } from '../state/modelLimits';
-import type { CodexVttState } from '../state/useCodexVtt';
+import type { HaedusState } from '../state/useHaedus';
 import { BenchPanel } from './BenchPanel';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ModelInfoTip } from './ModelInfoTip';
 
-export function ModelsPanel({ app }: { app: CodexVttState }) {
+export function ModelsPanel({ app }: { app: HaedusState }) {
   const { t, formatBytes, formatMemory, reason, issueText } = useI18n();
   const [confirming, setConfirming] = useState<ModelInfo>();
   const [removing, setRemoving] = useState<ModelInfo>();

@@ -47,12 +47,12 @@ I modelli Whisper vanno da decine di MB a qualche GB. Devono stare sul PC, esser
    | `large-v3` | ggml-large-v3.bin | ~2,9 GiB | ~3,9 GB | Solo override manuale su PC potenti |
 
    Le varianti solo inglese (`*.en`) restano fuori dal catalogo V1, perché l'utenza attesa è italiana. Si possono aggiungere se #2 lo richiede.
-3. **Selezione adattiva deterministica** in `CodexVtt.Core`. È una funzione pura `(ProfiloHardware, Catalogo) → Raccomandazione + motivazione`.
+3. **Selezione adattiva deterministica** in `Haedus.Core`. È una funzione pura `(ProfiloHardware, Catalogo) → Raccomandazione + motivazione`.
    - **Esclusione:** sono esclusi i modelli che superano la RAM disponibile con un margine, oppure lo spazio disco libero.
    - **Scelta:** tra i modelli rimasti si sceglie il più accurato la cui velocità stimata sia accettabile (soglia di RTF definita in #2 o #4) per i core e le estensioni CPU rilevati.
    - **Fonte delle soglie:** vengono dai benchmark (#9) e sono parte del catalogo, non del codice.
 4. **Override manuale** sempre consentito tra i modelli installati. Se il modello supera le capacità rilevate, l'app mostra un avviso esplicito ma non lo blocca, salvo spazio disco insufficiente.
-5. **Download** (solo `CodexVtt.Models.Download`, solo su azione esplicita):
+5. **Download** (solo `Haedus.Models.Download`, solo su azione esplicita):
    - controllo spazio prima di iniziare;
    - scrittura in `models\.partial\<id>.part`, con ripresa via HTTP Range;
    - hash SHA-256 calcolato durante il download;

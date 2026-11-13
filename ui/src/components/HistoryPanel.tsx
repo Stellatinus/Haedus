@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { collectionColors, type Collection, type CollectionColor, type HistoryEntry } from '../bridge/protocol';
 import { useI18n, type MessageKey } from '../i18n/i18n';
-import type { CodexVttState } from '../state/useCodexVtt';
+import type { HaedusState } from '../state/useHaedus';
 import { ConfirmDialog } from './ConfirmDialog';
 import { FolderControl, FolderTestedMark } from './FolderControl';
 import { FormDialog } from './FormDialog';
@@ -10,7 +10,7 @@ type Filter = 'all' | 'none' | string;
 
 const titleOf = (e: HistoryEntry) => e.title || e.audioFileName;
 
-export function HistoryPanel({ app, onOpened }: { app: CodexVttState; onOpened: (id: string) => void }) {
+export function HistoryPanel({ app, onOpened }: { app: HaedusState; onOpened: (id: string) => void }) {
   const { t, formatDate, formatShortDate, formatDuration } = useI18n();
   const history = app.history;
   const entries = useMemo(() => history?.entries ?? [], [history]);

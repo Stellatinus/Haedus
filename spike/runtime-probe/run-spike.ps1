@@ -20,7 +20,7 @@ param(
     [string]$Model = 'base',
     [string]$Audio,
     [string]$Language = 'auto',
-    [string]$ModelsDir = (Join-Path $env:LOCALAPPDATA 'CodexVTT-spike\models'),
+    [string]$ModelsDir = (Join-Path $env:LOCALAPPDATA 'Haedus-spike\models'),
     [switch]$SkipDownload,
     [switch]$SkipOfflineCheck,
     [switch]$AssumeOffline
@@ -68,7 +68,7 @@ Write-Host "Modello: $modelFile ($([math]::Round((Get-Item $modelFile).Length / 
 
 Write-Step 'Build del probe'
 dotnet build (Join-Path $here 'RuntimeProbe.csproj') -c Release -nologo | Out-Host
-$probe = Join-Path $here 'bin\Release\net10.0\codexvtt-runtime-probe.exe'
+$probe = Join-Path $here 'bin\Release\net10.0\haedus-runtime-probe.exe'
 
 if ($Audio) {
     $ffmpeg = Get-Command ffmpeg -ErrorAction SilentlyContinue

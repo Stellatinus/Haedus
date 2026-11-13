@@ -1,13 +1,13 @@
 {
-  "name": "codexvtt-ui",
+  "name": "haedus-ui",
   "private": true,
   "version": "2.2.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "build:app": "tsc --noEmit && vite build --outDir ../src/CodexVtt.App/Resources/Raw/wwwroot --emptyOutDir",
-    "build:server": "tsc --noEmit && vite build --mode server --outDir ../src/CodexVtt.Server/wwwroot --emptyOutDir",
+    "build:app": "tsc --noEmit && vite build --outDir ../src/Haedus.App/Resources/Raw/wwwroot --emptyOutDir",
+    "build:server": "tsc --noEmit && vite build --mode server --outDir ../src/Haedus.Server/wwwroot --emptyOutDir",
     "build:preview": "tsc --noEmit && vite build --mode preview --outDir dist-preview --emptyOutDir && node scripts/inline-preview.mjs dist-preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

@@ -30,4 +30,4 @@ Issue: #1. Aggiornare a ogni nuova dipendenza (controllo in #9). Lo stato "verif
 1. **Licenze ammesse senza revisione:** MIT, BSD, Apache-2.0, ISC e componenti di sistema Microsoft.
 2. **Licenze che richiedono un ADR:** LGPL/GPL/AGPL, licenze "source available", modelli con termini d'uso restrittivi. Questo vale in particolare per i modelli di diarization in V2, ad esempio quelli con accesso condizionato su Hugging Face.
 3. **File NOTICE:** un `THIRD-PARTY-NOTICES.md` generato in build (#8) e consultabile dalla schermata "Informazioni".
-4. **Licenza del progetto CodexVTT:** Apache License 2.0 (file `LICENSE`, avvisi di terzi in `NOTICE`), decisa dal maintainer il 2026-10-23. Le illustrazioni delle mascotte non sono coperte da questa licenza finché non si verifica quella di svgapp.ai.
+4. **Licenza del progetto Haedus:** Apache License 2.0 (file `LICENSE`, avvisi di terzi in `NOTICE`), decisa dal maintainer il 2026-10-23. Le illustrazioni delle mascotte non sono coperte da questa licenza finché non si verifica quella di svgapp.ai.

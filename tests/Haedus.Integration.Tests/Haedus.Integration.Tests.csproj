@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Haedus.Core\Haedus.Core.csproj" />
+    <ProjectReference Include="..\..\src\Haedus.Transcription.Whisper\Haedus.Transcription.Whisper.csproj" />
+    <ProjectReference Include="..\..\src\Haedus.Audio.Windows\Haedus.Audio.Windows.csproj" />
+  </ItemGroup>
+
+</Project>

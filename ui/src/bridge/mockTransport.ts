@@ -149,7 +149,7 @@ export function createMockTransport(options: MockOptions = {}): Transport {
     return result;
   };
   const benchSnapshot = (): BenchmarkState => ({ running: benchRunning, entries: [...benchEntries.values()], reliability: reliability() });
-  let historyDirectory = 'C:\\Users\\utente\\Documents\\CodexVTT\\history';
+  let historyDirectory = 'C:\\Users\\utente\\Documents\\Haedus\\history';
   const history = new Map<string, TranscriptionResult>();
   const saveHistory = (result: TranscriptionResult) => {
     const base = `${result.completedAt.slice(0, 19).replace('T', ' ').replace(/:/g, '.')} - ${result.audioFileName.replace(/\.[^.]+$/, '')}`;
@@ -310,12 +310,12 @@ export function createMockTransport(options: MockOptions = {}): Transport {
           model: { modelId: m.id, displayName: m.displayName, file: m.file, sha256: 'e3b0c44298fc1c149afbf4c8996fb924', runtime: 'Cpu' },
           segments: [
             { start: 0, end: 4.2, text: 'Buongiorno a tutti e grazie per essere qui.' },
-            { start: 4.2, end: 9.8, text: 'Oggi parliamo del rilascio della prima versione di CodexVTT.' },
+            { start: 4.2, end: 9.8, text: 'Oggi parliamo del rilascio della prima versione di Haedus.' },
             { start: 9.8, end: 14.1, text: 'Tutto il lavoro avviene in locale, sul vostro computer.' },
           ],
           elapsed: 96.4,
           completedAt: new Date().toISOString(),
-          text: 'Buongiorno a tutti e grazie per essere qui. Oggi parliamo del rilascio della prima versione di CodexVTT. Tutto il lavoro avviene in locale, sul vostro computer.',
+          text: 'Buongiorno a tutti e grazie per essere qui. Oggi parliamo del rilascio della prima versione di Haedus. Tutto il lavoro avviene in locale, sul vostro computer.',
         };
         results.set(jobId, result);
         event('transcription.progress', { jobId, status: 'completed', percent: 100, processed: 754.2, total: 754.2 });
@@ -685,7 +685,7 @@ export function createMockTransport(options: MockOptions = {}): Transport {
       case 'history.testFolder':
         if (!options.folderTestError) return { ok: true };
         return options.folderTestError === 'blocked_by_windows'
-          ? { ok: false, error: 'blocked_by_windows', controlledFolderAccess: 'on', appPath: 'C:\\Users\\utente\\AppData\\Local\\CodexVTT\\current\\CodexVtt.App.exe' }
+          ? { ok: false, error: 'blocked_by_windows', controlledFolderAccess: 'on', appPath: 'C:\\Users\\utente\\AppData\\Local\\Haedus\\current\\Haedus.App.exe' }
           : { ok: false, error: options.folderTestError };
       case 'history.setFolder':
         if (options.folderTestError) throw { code: 'folder_test_failed', message: options.folderTestError };

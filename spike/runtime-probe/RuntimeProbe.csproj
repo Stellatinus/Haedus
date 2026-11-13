@@ -5,8 +5,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>codexvtt-runtime-probe</AssemblyName>
-    <RootNamespace>CodexVtt.Spike.RuntimeProbe</RootNamespace>
+    <AssemblyName>haedus-runtime-probe</AssemblyName>
+    <RootNamespace>Haedus.Spike.RuntimeProbe</RootNamespace>
     <!-- Codice di spike: analisi standard, senza warning bloccanti. -->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <AnalysisLevel>latest-default</AnalysisLevel>

@@ -1,4 +1,4 @@
-// Contratto core ↔ UI (ADR-0001). Specchio dei DTO in src/CodexVtt.Bridge: va aggiornato insieme.
+// Contratto core ↔ UI (ADR-0001). Specchio dei DTO in src/Haedus.Bridge: va aggiornato insieme.
 
 export const PROTOCOL_VERSION = 1;
 
@@ -41,7 +41,7 @@ export interface ModelAccuracy {
   percent: number;
   metric: string;
   source: string;
-  /** false: valore preso dalla scheda del modello, non misurato da CodexVTT. */
+  /** false: valore preso dalla scheda del modello, non misurato da Haedus. */
   measuredByProject: boolean;
 }
 

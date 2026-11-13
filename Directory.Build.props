@@ -6,7 +6,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <Version>2.2.1</Version>
-    <Authors>CodexVTT</Authors>
-    <Product>CodexVTT</Product>
+    <Authors>Haedus</Authors>
+    <Product>Haedus</Product>
   </PropertyGroup>
 </Project>

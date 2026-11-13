@@ -1,5 +1,5 @@
 /*
- * Interfaccia ispirata a codex-vtt-editor.html: barra in alto con le sezioni, elenco dei file a sinistra,
+ * Interfaccia ispirata a haedus-editor.html: barra in alto con le sezioni, elenco dei file a sinistra,
  * editor al centro (segmenti, parlanti, timeline) e proprietà a destra. Colori come token: il tema scuro
  * ridefinisce gli stessi token del chiaro, e senza scelta esplicita segue il sistema.
  */

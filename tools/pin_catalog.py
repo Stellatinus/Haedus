@@ -2,7 +2,7 @@
 """Fissa revisione, dimensioni e SHA-256 del catalogo modelli (ADR-0003, ADR-0009).
 
 Legge i metadati dall'API pubblica di Hugging Face e aggiorna
-src/CodexVtt.Core/Models/models-catalog.json. I modelli Whisper (file singolo) usano la sorgente del catalogo;
+src/Haedus.Core/Models/models-catalog.json. I modelli Whisper (file singolo) usano la sorgente del catalogo;
 i modelli a più file (Parakeet, Canary, Cohere) hanno una sorgente propria e si fissano uno alla volta, perché
 sono export di terzi: cambiare la loro revisione è una scelta, non un aggiornamento automatico.
 I file piccoli senza metadati LFS (tokens.txt) vengono scaricati e calcolati; i pesi non vengono mai scaricati.
@@ -21,19 +21,19 @@ import sys
 import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-CATALOG = ROOT / "src" / "CodexVtt.Core" / "Models" / "models-catalog.json"
+CATALOG = ROOT / "src" / "Haedus.Core" / "Models" / "models-catalog.json"
 API = "https://huggingface.co/api/models/{repo}"
 SMALL_FILE_BYTES = 5_000_000
 
 
 def get_json(url: str):
-    request = urllib.request.Request(url, headers={"User-Agent": "codexvtt-catalog-pin"})
+    request = urllib.request.Request(url, headers={"User-Agent": "haedus-catalog-pin"})
     with urllib.request.urlopen(request, timeout=60) as response:
         return json.load(response)
 
 
 def sha256_of(url: str) -> str:
-    request = urllib.request.Request(url, headers={"User-Agent": "codexvtt-catalog-pin"})
+    request = urllib.request.Request(url, headers={"User-Agent": "haedus-catalog-pin"})
     digest = hashlib.sha256()
     with urllib.request.urlopen(request, timeout=120) as response:
         for block in iter(lambda: response.read(1 << 20), b""):

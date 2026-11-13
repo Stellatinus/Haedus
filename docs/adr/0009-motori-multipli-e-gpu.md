@@ -6,7 +6,7 @@
 
 ## Contesto
 
-Fino alla 1.0 CodexVTT eseguiva solo Whisper (whisper.cpp tramite Whisper.net), sulla CPU: un modello era un solo
+Fino alla 1.0 Haedus eseguiva solo Whisper (whisper.cpp tramite Whisper.net), sulla CPU: un modello era un solo
 file GGML e il runtime GPU era escluso (ADR-0002). Volevamo aggiungere altri modelli locali per l'italiano (NVIDIA
 Parakeet TDT 0.6B v3, Canary-1B-v2 e Cohere Transcribe) con un'indicazione di affidabilità, scaricabili dall'app, e
 usare la scheda video quando c'è.
@@ -16,7 +16,7 @@ usare la scheda video quando c'è.
 ### Motori
 - `ITranscriptionEngine.LoadAsync` riceve la voce del catalogo e `EngineRegistry` sceglie il motore dal campo `engine`:
   `whisper` (Whisper.net), `sherpa-transducer` (Parakeet), `sherpa-canary` (Canary), `sherpa-cohere` (Cohere).
-- Parakeet, Canary e Cohere girano con **sherpa-onnx 2.0.0** (Apache-2.0, ONNX Runtime) in `CodexVtt.Transcription.Sherpa`,
+- Parakeet, Canary e Cohere girano con **sherpa-onnx 2.0.0** (Apache-2.0, ONNX Runtime) in `Haedus.Transcription.Sherpa`,
   sulla CPU, in int8. Il blocco da trascrivere (10 minuti) è diviso in finestre di circa 28 secondi tagliate nei punti
   silenziosi. Con i timestamp dei token (Parakeet) i segmenti seguono le frasi; senza (Canary, Cohere) una finestra è un segmento.
 - **I runtime nativi stanno nell'installer, non si scaricano** (sicurezza e aggiornamenti): +22 MB circa per sherpa-onnx e ONNX
@@ -40,10 +40,10 @@ usare la scheda video quando c'è.
 
 ### Affidabilità
 - Definizione: 100 − WER% sull'italiano. Per ora è il valore **pubblicato dagli autori** (FLEURS-it dalle schede di
-  nvidia/parakeet-tdt-0.6b-v3: 3,00% e nvidia/canary-1b-v2: 3,07%), segnalato come «non misurato da CodexVTT» e riferito al modello
+  nvidia/parakeet-tdt-0.6b-v3: 3,00% e nvidia/canary-1b-v2: 3,07%), segnalato come «non misurato da Haedus» e riferito al modello
   originale, non all'export int8. Per Whisper e Cohere non c'è ancora un numero e l'app lo dice («non ancora misurata»).
-- `tools/CodexVtt.Bench` scarica i modelli con lo stesso downloader dell'app, li esegue sullo stesso audio e calcola tempo, velocità e
-  WER (`CodexVtt.Core.Evaluation.WordErrorRate`, stessa normalizzazione per riferimento e ipotesi). È lo strumento per misurare
+- `tools/Haedus.Bench` scarica i modelli con lo stesso downloader dell'app, li esegue sullo stesso audio e calcola tempo, velocità e
+  WER (`Haedus.Core.Evaluation.WordErrorRate`, stessa normalizzazione per riferimento e ipotesi). È lo strumento per misurare
   tutti i modelli su un insieme comune (issue dedicata); non si inventano numeri nel frattempo.
 
 ### GPU
@@ -52,7 +52,7 @@ usare la scheda video quando c'è.
   e l'impostazione «Usa la scheda video» è attiva (di default sì). Altrimenti resta sul runtime CPU, come prima.
 - Il runtime nativo si sceglie una volta per processo: cambiare l'impostazione richiede di riavviare.
 - Il nome del runtime nel risultato dice la verità: «Vulkan (GPU)» solo se whisper.cpp ha scelto la scheda; se il runtime è caricato ma
-  non trova dispositivi risulta «Cpu». La scheda trovata si vede nella scheda Modelli. `CODEXVTT_WHISPER_LOG=1` stampa i messaggi di ggml.
+  non trova dispositivi risulta «Cpu». La scheda trovata si vede nella scheda Modelli. `HAEDUS_WHISPER_LOG=1` stampa i messaggi di ggml.
 - **Parakeet, Canary e Cohere restano sulla CPU**: la GPU in sherpa-onnx richiede i pacchetti CUDA di ONNX Runtime (centinaia di MB e il
   toolkit NVIDIA), fuori dal perimetro di questa versione.
 - Nel container Docker la GPU non è disponibile (servono driver e runtime NVIDIA nel container).
@@ -67,6 +67,6 @@ usare la scheda video quando c'è.
 
 ## Punti aperti
 
-- Misurare l'affidabilità di tutti i modelli su FLEURS-it con `CodexVtt.Bench` e sostituire i valori pubblicati.
+- Misurare l'affidabilità di tutti i modelli su FLEURS-it con `Haedus.Bench` e sostituire i valori pubblicati.
 - GPU anche per sherpa-onnx (CUDA/DirectML), selezione del backend in Impostazioni, supporto GPU nel container.
 - Licenza dell'export Canary della community e del repository Cohere (verificate sulle schede il 2026-10-23, nessun testo di licenza nel repository dell'export).

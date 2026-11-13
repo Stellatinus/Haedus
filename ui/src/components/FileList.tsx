@@ -1,5 +1,5 @@
 import { useI18n, type MessageKey } from "../i18n/i18n";
-import type { CodexVttState, QueueItem } from "../state/useCodexVtt";
+import type { HaedusState, QueueItem } from "../state/useHaedus";
 import { Icon } from "./Icon";
 
 export type Selection =
@@ -21,7 +21,7 @@ export function workingStatus(paused: boolean): "paused" | "working" {
 }
 
 interface Props {
-  app: CodexVttState;
+  app: HaedusState;
   selection: Selection;
   running: boolean;
   paused: boolean;

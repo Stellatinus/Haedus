@@ -6,7 +6,7 @@
 
 ## Contesto
 
-CodexVTT deve eseguire modelli OpenAI Whisper sul PC dell'utente, da C#/.NET, senza servizi online. Il criterio è eseguire un modello Whisper in locale, non usare necessariamente la libreria Python originale `openai-whisper`. Il runtime scelto determina dimensione della distribuzione, prestazioni CPU/GPU, formato dei modelli, requisiti di sistema e riuso su mobile (V3).
+Haedus deve eseguire modelli OpenAI Whisper sul PC dell'utente, da C#/.NET, senza servizi online. Il criterio è eseguire un modello Whisper in locale, non usare necessariamente la libreria Python originale `openai-whisper`. Il runtime scelto determina dimensione della distribuzione, prestazioni CPU/GPU, formato dei modelli, requisiti di sistema e riuso su mobile (V3).
 
 ## Opzioni considerate
 
@@ -40,8 +40,8 @@ Lo spike [`spike/runtime-probe`](../../spike/runtime-probe/README.md) usa Whispe
    L'ordine di caricamento dei runtime è fissato esplicitamente con `RuntimeOptions.RuntimeLibraryOrder`. Uno **spike GPU (Vulkan)** è proposto come follow-up post-V1.
 3. **Formato modelli: GGML** (`ggml-*.bin`), comprese le varianti quantizzate. Dettagli in ADR-0003.
 4. **Requisiti minimi V1: Windows 11 x64** (confermato dal maintainer il 2026-10-14), VC++ Redistributable 2015-2022 x64 (gestito dall'installer, ADR-0005), CPU x64. Windows 10 è fuori supporto Microsoft da ottobre 2025 e non è dichiarato da Whisper.net 1.9.x: non è supportato in V1. ARM64 è un non-obiettivo di V1, anche se il runtime esiste.
-5. **Isolamento:** Whisper.net è referenziato solo da `CodexVtt.Transcription.Whisper` (ADR-0001), dietro un'interfaccia del core. Così si può sostituire il runtime (ad esempio con ONNX) senza toccare UI e dominio.
-6. **Non si usa `WhisperGgmlDownloader`** di Whisper.net: scarica dalla rete senza verifica di hash e senza la policy di ADR-0006. Il download è gestito da `CodexVtt.Models.Download`.
+5. **Isolamento:** Whisper.net è referenziato solo da `Haedus.Transcription.Whisper` (ADR-0001), dietro un'interfaccia del core. Così si può sostituire il runtime (ad esempio con ONNX) senza toccare UI e dominio.
+6. **Non si usa `WhisperGgmlDownloader`** di Whisper.net: scarica dalla rete senza verifica di hash e senza la policy di ADR-0006. Il download è gestito da `Haedus.Models.Download`.
 7. **Parametri V1:**
    - lingua `auto` (rilevamento) o scelta dall'utente;
    - thread = core logici − 1;

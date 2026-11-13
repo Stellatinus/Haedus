@@ -1,8 +1,8 @@
 import { useI18n } from '../i18n/i18n';
-import type { CodexVttState } from '../state/useCodexVtt';
+import type { HaedusState } from '../state/useHaedus';
 
 /** Avanzamento del lavoro in corso, con il tempo rimanente stimato dal core (e per tutta la coda). */
-export function RunStatus({ app }: { app: CodexVttState }) {
+export function RunStatus({ app }: { app: HaedusState }) {
   const { t, formatDuration, formatRemaining } = useI18n();
   const progress = app.progress;
   const running = Boolean(app.jobId) || progress?.status === 'queued' || app.queueRunning;

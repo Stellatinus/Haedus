@@ -6,7 +6,7 @@
 
 ## Contesto
 
-CodexVTT V1 è un'app desktop Windows che trascrive audio con un modello Whisper eseguito localmente. Lo stack previsto è C#/.NET, .NET MAUI e React. Le fasi successive aggiungeranno timestamp e speaker (V2), mobile Android/iOS (V3) e server (V4). L'architettura V1 deve:
+Haedus V1 è un'app desktop Windows che trascrive audio con un modello Whisper eseguito localmente. Lo stack previsto è C#/.NET, .NET MAUI e React. Le fasi successive aggiungeranno timestamp e speaker (V2), mobile Android/iOS (V3) e server (V4). L'architettura V1 deve:
 
 - isolare il codice che accede alla rete (solo download dei modelli) dal codice che tratta audio e testo;
 - permettere di riusare il core in V3 (MAUI mobile) e V4 (servizio HTTP) senza riscriverlo;
@@ -39,19 +39,19 @@ CodexVTT V1 è un'app desktop Windows che trascrive audio con un modello Whisper
 
    ```text
    src/
-     CodexVtt.Core/              net10.0, nessuna UI e nessun riferimento a System.Net.Http
+     Haedus.Core/              net10.0, nessuna UI e nessun riferimento a System.Net.Http
                                dominio: job di trascrizione, segmenti, export, profilo hardware,
                                regole di selezione, catalogo modelli (lettura), errori tipizzati
-     CodexVtt.Transcription.Whisper/  adattatore Whisper.net (unica dipendenza nativa di inferenza)
-     CodexVtt.Audio.Windows/     decoder Media Foundation (ADR-0004), dietro IAudioDecoder
-     CodexVtt.Models.Download/   UNICO progetto con HttpClient: download e verifica modelli (ADR-0003/0006)
-     CodexVtt.Bridge/            DTO del contratto, dispatcher dei comandi, serializzazione con source generator
-     CodexVtt.App/               app MAUI (net10.0-windows10.0.xxxxx): DI, lifecycle, HybridWebView, dialog file
+     Haedus.Transcription.Whisper/  adattatore Whisper.net (unica dipendenza nativa di inferenza)
+     Haedus.Audio.Windows/     decoder Media Foundation (ADR-0004), dietro IAudioDecoder
+     Haedus.Models.Download/   UNICO progetto con HttpClient: download e verifica modelli (ADR-0003/0006)
+     Haedus.Bridge/            DTO del contratto, dispatcher dei comandi, serializzazione con source generator
+     Haedus.App/               app MAUI (net10.0-windows10.0.xxxxx): DI, lifecycle, HybridWebView, dialog file
    ui/                         React + TypeScript + Vite; bridge reale e mock
    tests/
-     CodexVtt.Core.Tests/        unitari
-     CodexVtt.Architecture.Tests/ vincoli di dipendenza (es. Core non referenzia System.Net.Http)
-     CodexVtt.Integration.Tests/ trascrizione reale con modello piccolo e fixture
+     Haedus.Core.Tests/        unitari
+     Haedus.Architecture.Tests/ vincoli di dipendenza (es. Core non referenzia System.Net.Http)
+     Haedus.Integration.Tests/ trascrizione reale con modello piccolo e fixture
    docs/  spike/
    ```
 
@@ -71,9 +71,9 @@ CodexVTT V1 è un'app desktop Windows che trascrive audio con un modello Whisper
 
    - **Codici d'errore** stabili (`snake_case`), mappati ai testi del catalogo di #2.
    - **Percorsi file:** la UI non li riceve mai in forma libera. I file scelti dall'utente tramite dialog nativi vengono registrati dal core e referenziati con un `audioId` opaco. Così si riduce la superficie di attacco dalla WebView.
-   - I DTO vivono in `CodexVtt.Bridge`. I tipi TypeScript sono generati o verificati da test di contratto, per evitare divergenze.
+   - I DTO vivono in `Haedus.Bridge`. I tipi TypeScript sono generati o verificati da test di contratto, per evitare divergenze.
 
-5. **Configurazione e dati:** directory per utente `%LOCALAPPDATA%\CodexVTT.Data\` (fuori dalla cartella gestita da Velopack, #18) con `models\`, `temp\`, `logs\` e `settings.json`. La directory dei modelli è configurabile.
+5. **Configurazione e dati:** directory per utente `%LOCALAPPDATA%\Haedus.Data\` (fuori dalla cartella gestita da Velopack, #18) con `models\`, `temp\`, `logs\` e `settings.json`. La directory dei modelli è configurabile.
 6. **Logging:** `Microsoft.Extensions.Logging` con sink su file locale e rotazione. Il testo trascritto e i percorsi audio completi non finiscono nei log, salvo modalità debug attivata dall'utente.
 7. **Errori:** eccezioni di dominio con codice, mappate a `error.code` al confine del bridge. Le eccezioni non gestite vengono registrate nel log e mostrate all'utente con un messaggio generico, senza invio online (ADR-0006).
 8. **Concorrenza:** un job di trascrizione alla volta in V1. L'inferenza gira fuori dal thread UI e la cancellazione passa da `CancellationToken`.
@@ -81,7 +81,7 @@ CodexVTT V1 è un'app desktop Windows che trascrive audio con un modello Whisper
 ## Conseguenze
 
 - Il core non dipende né da MAUI né dalla WebView. È riusabile in V3 (MAUI mobile, dove Whisper.net ha runtime Android/iOS) e in V4 (ASP.NET Core).
-- La regola "solo `CodexVtt.Models.Download` usa la rete" è verificabile con test di architettura (#9).
+- La regola "solo `Haedus.Models.Download` usa la rete" è verificabile con test di architettura (#9).
 - Il mock del bridge permette di sviluppare e testare la UI (#6) in parallelo alla shell (#7).
 - Si accetta il rischio di maturità di MAUI su Windows (R-01 in [rischi](../architecture/rischi.md)), mitigato dal fallback del punto 2.
 

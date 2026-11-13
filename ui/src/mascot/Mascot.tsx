@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { mascotCharacters, type MascotCharacter } from '../bridge/protocol';
-import type { Activity } from '../state/useCodexVtt';
+import type { Activity } from '../state/useHaedus';
 import { shapes, type Art } from './art';
 import { giulio } from './giulio';
 import { tina } from './tina';

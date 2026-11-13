@@ -1,11 +1,11 @@
 import { useI18n } from '../i18n/i18n';
-import type { CodexVttState, QueueItem } from '../state/useCodexVtt';
+import type { HaedusState, QueueItem } from '../state/useHaedus';
 import { Editor } from '../editor/Editor';
 import type { Selection } from './FileList';
 import { RunStatus } from './RunStatus';
 
 interface Props {
-  app: CodexVttState;
+  app: HaedusState;
   selection: Selection;
   onDirtyChange: (dirty: boolean) => void;
   onCopied: () => void;

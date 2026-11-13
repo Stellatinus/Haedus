@@ -11,7 +11,7 @@ const CSP = APP_CSP;
 /** Nella build per la versione server (`--mode server`) la stessa CSP, ma senza lo script di HybridWebView. */
 function appShell(hybridWebView: boolean): Plugin {
   return {
-    name: 'codexvtt-app-shell',
+    name: 'haedus-app-shell',
     apply: 'build',
     transformIndexHtml() {
       return [

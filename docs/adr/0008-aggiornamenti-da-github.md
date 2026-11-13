@@ -6,13 +6,13 @@
 
 ## Contesto
 
-CodexVTT vive in un repository pubblico su GitHub e si distribuisce con l'installer Velopack (ADR-0005), che già
+Haedus vive in un repository pubblico su GitHub e si distribuisce con l'installer Velopack (ADR-0005), che già
 sa aggiornare l'app ma finora nessuno lo chiamava: ogni versione si reinstallava a mano. Il repository non ha
 GitHub Actions: le release si costruiscono dal PC (`scripts/release-locale.ps1`).
 
 ## Decisione
 
-- **Fonte**: le release del repository indicato in `CodexVtt.Core.ProjectInfo.RepositoryUrl` (unico punto da cambiare
+- **Fonte**: le release del repository indicato in `Haedus.Core.ProjectInfo.RepositoryUrl` (unico punto da cambiare
   se il progetto si sposta; lo legge anche lo script di rilascio). Velopack usa `GithubSource`: legge le release
   pubbliche (non draft; le pre-release solo se la versione installata è già una pre-release) e scarica i pacchetti
   `*-full.nupkg` / `*-delta.nupkg` indicati da `releases.win.json`, verificandone l'SHA-256.
@@ -26,11 +26,11 @@ GitHub Actions: le release si costruiscono dal PC (`scripts/release-locale.ps1`)
   collegamenti degli asset che GitHub indica nella release del repository configurato. Il rischio è contenuto perché
   l'indirizzo di partenza è fisso nel codice e i pacchetti sono verificati con SHA-256 dal feed della stessa release;
   non c'è firma del codice (punto aperto).
-- **Dove**: `CodexVtt.Updates` è l'unico assembly che riferisce Velopack (lo verifica un test di architettura).
-  Core, Bridge, Whisper, audio e download dei modelli restano senza rete, tranne `CodexVtt.Models.Download` (ADR-0006).
+- **Dove**: `Haedus.Updates` è l'unico assembly che riferisce Velopack (lo verifica un test di architettura).
+  Core, Bridge, Whisper, audio e download dei modelli restano senza rete, tranne `Haedus.Models.Download` (ADR-0006).
   La WebView non fa richieste: il controllo lo esegue il processo .NET. Il server/Docker non si aggiorna da solo.
 - **Build non installate** (sviluppo, server, container): stato `Unsupported`, nessuna richiesta.
-- **Prove senza GitHub**: `CODEXVTT_UPDATE_SOURCE` (cartella o indirizzo di un feed Velopack) sostituisce la fonte.
+- **Prove senza GitHub**: `HAEDUS_UPDATE_SOURCE` (cartella o indirizzo di un feed Velopack) sostituisce la fonte.
 - **Rilascio**: `release-locale.ps1` scarica le release precedenti (per i delta), costruisce il pacchetto con `vpk pack`
   e pubblica con `gh release create` **tutti** i file di `installer/`, feed incluso. Una release incompleta o in
   bozza non viene vista dall'app. Non c'è firma del codice (ADR-0005): SmartScreen avvisa alla prima installazione.
@@ -43,7 +43,7 @@ GitHub Actions: le release si costruiscono dal PC (`scripts/release-locale.ps1`)
   reindirizza il vecchio indirizzo; per sicurezza la prima release dopo uno spostamento va pubblicata anche nel
   vecchio repository, oppure l'utente reinstalla dall'ultima release.
 - Una release pubblica è irrevocabile in pratica: chi ha l'app la vedrà. Provare sempre con `-DryRun` e con
-  `CODEXVTT_UPDATE_SOURCE` prima di pubblicare.
+  `HAEDUS_UPDATE_SOURCE` prima di pubblicare.
 - Il privacy badge dell'app e il testo in Impostazioni dichiarano che la rete serve a modelli e aggiornamenti.
 
 ## Punti aperti

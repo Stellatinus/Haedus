@@ -8,7 +8,7 @@
   La release contiene anche il feed di Velopack (releases.win.json, pacchetti completi e delta): è quello che
   l'app legge per aggiornarsi da sola (ADR-0008), quindi la release non va mai pubblicata a mano o a metà.
   La versione è quella di Directory.Build.props; il commit deve essere l'ultimo di main.
-  Il repository è quello di src/CodexVtt.Core/ProjectInfo.cs (si può forzare con -Repo).
+  Il repository è quello di src/Haedus.Core/ProjectInfo.cs (si può forzare con -Repo).
 
   Requisiti sul PC: Windows 11 x64, .NET SDK 10 con il workload maui-windows, Node 22, Visual Studio
   (per il runtime VC++), Git e GitHub CLI (`gh auth login` già fatto).
@@ -29,7 +29,7 @@ Set-Location $root
 
 # Un solo posto per l'indirizzo del progetto: ProjectInfo.cs (lo usa anche l'app per cercare gli aggiornamenti).
 if (-not $Repo) {
-    $info = Get-Content src/CodexVtt.Core/ProjectInfo.cs -Raw
+    $info = Get-Content src/Haedus.Core/ProjectInfo.cs -Raw
     if ($info -notmatch 'RepositoryUrl\s*=\s*"https://github\.com/([^"]+)"') { throw 'RepositoryUrl non trovato in ProjectInfo.cs' }
     $Repo = $Matches[1]
 }
@@ -67,7 +67,7 @@ Pop-Location
 
 Write-Step 'Publish app (win-x64, self-contained)'
 Remove-Item publish, installer -Recurse -Force -ErrorAction SilentlyContinue
-Invoke-Checked { dotnet publish src/CodexVtt.App -c Release -r win-x64 -o publish }
+Invoke-Checked { dotnet publish src/Haedus.App -c Release -r win-x64 -o publish }
 
 Write-Step 'Runtime VC++ app-local (ADR-0005)'
 $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products '*' -property installationPath
@@ -81,7 +81,7 @@ if (-not (Get-Command vpk -ErrorAction SilentlyContinue)) { Invoke-Checked { dot
 # Le release precedenti servono a Velopack per creare i pacchetti delta (aggiornamenti più leggeri). Alla prima release non ce ne sono.
 vpk download github --repoUrl "https://github.com/$Repo" --token (gh auth token) --outputDir installer 2>&1 | Write-Host
 if ($LASTEXITCODE -ne 0) { Write-Host 'Nessuna release precedente: pacchetto completo senza delta.' -ForegroundColor Yellow }
-Invoke-Checked { vpk pack --packId CodexVTT --packVersion $version --packDir publish --mainExe CodexVtt.App.exe --packTitle CodexVTT --releaseNotes $notes --outputDir installer }
+Invoke-Checked { vpk pack --packId Haedus --packVersion $version --packDir publish --mainExe Haedus.App.exe --packTitle Haedus --releaseNotes $notes --outputDir installer }
 # Installer non firmato (ADR-0005): si pubblicano i checksum per la verifica manuale.
 $sums = Get-ChildItem installer -File | Get-FileHash -Algorithm SHA256 |
     ForEach-Object { "$($_.Hash.ToLowerInvariant())  $(Split-Path $_.Path -Leaf)" }
@@ -98,5 +98,5 @@ Write-Step "Release v$version"
 $files = Get-ChildItem installer -File | ForEach-Object FullName
 $extra = @()
 if ($version -like '*-*') { $extra += '--prerelease' }
-Invoke-Checked { gh release create "v$version" @files --repo $Repo --target $head --title "CodexVTT $version" --notes-file $notes @extra }
+Invoke-Checked { gh release create "v$version" @files --repo $Repo --target $head --title "Haedus $version" --notes-file $notes @extra }
 Write-Host "`nRelease v$version pubblicata." -ForegroundColor Green

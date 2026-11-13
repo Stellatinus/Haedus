@@ -1,5 +1,5 @@
 import { transcriptionLanguages, useI18n, type MessageKey } from '../i18n/i18n';
-import type { CodexVttState } from '../state/useCodexVtt';
+import type { HaedusState } from '../state/useHaedus';
 import { FolderControl } from './FolderControl';
 import { Icon } from './Icon';
 import { RunStatus } from './RunStatus';
@@ -7,7 +7,7 @@ import { RunStatus } from './RunStatus';
 const manageModels = '__manage';
 
 interface Props {
-  app: CodexVttState;
+  app: HaedusState;
   language: string;
   onLanguage: (language: string) => void;
   needsLanguage: boolean;

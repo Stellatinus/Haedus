@@ -1,0 +1,27 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Haedus.Core/Haedus.Core.csproj" />
+    <Project Path="src/Haedus.Transcription.Whisper/Haedus.Transcription.Whisper.csproj" />
+    <Project Path="src/Haedus.Transcription.Sherpa/Haedus.Transcription.Sherpa.csproj" />
+    <Project Path="src/Haedus.Audio.Windows/Haedus.Audio.Windows.csproj" />
+    <Project Path="src/Haedus.Audio.FFmpeg/Haedus.Audio.FFmpeg.csproj" />
+    <Project Path="src/Haedus.Models.Download/Haedus.Models.Download.csproj" />
+    <Project Path="src/Haedus.Bridge/Haedus.Bridge.csproj" />
+    <Project Path="src/Haedus.App/Haedus.App.csproj" />
+    <Project Path="src/Haedus.Server/Haedus.Server.csproj" />
+    <Project Path="src/Haedus.Updates/Haedus.Updates.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Haedus.Core.Tests/Haedus.Core.Tests.csproj" />
+    <Project Path="tests/Haedus.Architecture.Tests/Haedus.Architecture.Tests.csproj" />
+    <Project Path="tests/Haedus.Integration.Tests/Haedus.Integration.Tests.csproj" />
+    <Project Path="tests/Haedus.Server.Tests/Haedus.Server.Tests.csproj" />
+    <Project Path="tests/Haedus.Updates.Tests/Haedus.Updates.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Haedus.Bench/Haedus.Bench.csproj" />
+  </Folder>
+  <Folder Name="/spike/">
+    <Project Path="spike/runtime-probe/RuntimeProbe.csproj" />
+  </Folder>
+</Solution>

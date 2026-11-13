@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <!-- Versione server (ADR-0007): stessa UI servita al browser, core in un processo che può girare come servizio di Windows. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Haedus.Server</RootNamespace>
+    <UserSecretsId>haedus-server</UserSecretsId>
+    <!-- Gli SDK più recenti segnalano argomenti banali dei log (un contatore, un nome di tipo): non vale la pena guardarli. -->
+    <NoWarn>$(NoWarn);CA1873</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Haedus.Core\Haedus.Core.csproj" />
+    <ProjectReference Include="..\Haedus.Bridge\Haedus.Bridge.csproj" />
+    <ProjectReference Include="..\Haedus.Transcription.Whisper\Haedus.Transcription.Whisper.csproj" />
+    <ProjectReference Include="..\Haedus.Transcription.Sherpa\Haedus.Transcription.Sherpa.csproj" />
+    <ProjectReference Include="..\Haedus.Audio.Windows\Haedus.Audio.Windows.csproj" />
+    <ProjectReference Include="..\Haedus.Audio.FFmpeg\Haedus.Audio.FFmpeg.csproj" />
+    <ProjectReference Include="..\Haedus.Models.Download\Haedus.Models.Download.csproj" />
+  </ItemGroup>
+
+  <!-- La UI (npm run build:server) finisce in wwwroot. Senza, il server parte ma mostra solo un avviso. -->
+  <ItemGroup>
+    <!-- Anche in bin: la content root è la cartella dell'eseguibile (servizio di Windows). -->
+    <Content Update="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <Target Name="EnsureServerUiBuilt" BeforeTargets="Publish" Condition="!Exists('wwwroot\index.html')">
+    <Error Text="UI non compilata: eseguire 'npm ci &amp;&amp; npm run build:server' nella cartella ui/." />
+  </Target>
+
+</Project>

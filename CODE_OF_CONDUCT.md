@@ -4,7 +4,7 @@ Questo codice di condotta si ispira al [Contributor Covenant](https://www.contri
 
 ## Il nostro impegno
 
-Come partecipanti, contributori e maintainer ci impegniamo a rendere la partecipazione a CodexVTT un'esperienza libera da molestie per tutti, indipendentemente da età, corporatura, disabilità visibili o invisibili, etnia, caratteristiche sessuali, identità ed espressione di genere, livello di esperienza, istruzione, condizione socio-economica, nazionalità, aspetto, religione o orientamento sessuale.
+Come partecipanti, contributori e maintainer ci impegniamo a rendere la partecipazione a Haedus un'esperienza libera da molestie per tutti, indipendentemente da età, corporatura, disabilità visibili o invisibili, etnia, caratteristiche sessuali, identità ed espressione di genere, livello di esperienza, istruzione, condizione socio-economica, nazionalità, aspetto, religione o orientamento sessuale.
 
 Ci impegniamo ad agire e a interagire in modi che contribuiscano a una comunità aperta, accogliente, diversificata, inclusiva e sana.
 
