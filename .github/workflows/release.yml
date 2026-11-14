@@ -1,0 +1,172 @@
+name: Release
+
+# Si lancia a mano da Actions → Release → Run workflow, sempre da main.
+# La versione è quella di Directory.Build.props e le note stanno in docs/releases/<versione>.md.
+# Con «dry_run» (predefinito) costruisce tutto e carica l'installer come artefatto, senza pubblicare nulla.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Costruisci tutto ma non pubblicare (release GitHub e immagine Docker)"
+        type: boolean
+        default: true
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+jobs:
+  installer:
+    name: Installer Windows e release GitHub
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Controlli
+        id: meta
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF -ne 'refs/heads/main') { throw "La release parte solo da main (ref: $env:GITHUB_REF)." }
+          $version = (Select-Xml -Path Directory.Build.props -XPath '//Version').Node.InnerText
+          $notes = "docs/releases/$version.md"
+          if (-not (Test-Path $notes)) { throw "Mancano le note di rilascio: $notes" }
+          if ($version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') { throw "Versione non valida: $version" }
+          $uiVersion = (Get-Content ui/package.json -Raw | ConvertFrom-Json).version
+          if ($uiVersion -ne $version) { throw "ui/package.json ($uiVersion) e Directory.Build.props ($version) non coincidono." }
+          if ('${{ inputs.dry_run }}' -ne 'true') {
+            $ErrorActionPreference = 'Continue'
+            gh release view "v$version" --repo $env:GITHUB_REPOSITORY 2>&1 | Out-Null
+            $exists = $LASTEXITCODE -eq 0
+            $ErrorActionPreference = 'Stop'
+            if ($exists) { throw "La release v$version esiste già." }
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Versione $version, commit $env:GITHUB_SHA"
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Workload MAUI
+        run: dotnet workload install maui-windows
+
+      - name: Test (soluzione)
+        run: dotnet test Haedus.slnx --nologo
+
+      - name: Build UI per l'app
+        working-directory: ui
+        run: |
+          npm ci
+          npm run build:app
+
+      - name: Publish app (win-x64, self-contained)
+        run: dotnet publish src/Haedus.App -c Release -r win-x64 -o publish
+
+      - name: Runtime VC++ app-local (ADR-0005)
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products '*' -property installationPath
+          $crt = Get-ChildItem "$vs\VC\Redist\MSVC" -Directory | Sort-Object Name -Descending |
+              ForEach-Object { Join-Path $_.FullName 'x64\Microsoft.VC143.CRT' } | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $crt) { throw 'Redistributable VC++ non trovato' }
+          Copy-Item "$crt\*.dll" publish/
+
+      - name: Installer Velopack
+        shell: pwsh
+        run: |
+          $version = '${{ steps.meta.outputs.version }}'
+          dotnet tool install -g vpk --version 1.2.161
+          if ($LASTEXITCODE -ne 0) { throw 'installazione di vpk fallita' }
+          "$env:USERPROFILE\.dotnet\tools" >> $env:GITHUB_PATH
+          $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
+          # Le release precedenti servono per i pacchetti delta; alla prima release non ce ne sono.
+          $ErrorActionPreference = 'Continue'
+          vpk download github --repoUrl "https://github.com/$env:GITHUB_REPOSITORY" --token $env:GH_TOKEN --outputDir installer 2>&1 | Write-Host
+          if ($LASTEXITCODE -ne 0) { Write-Host '::warning::Nessuna release precedente (o download non riuscito): pacchetto completo senza delta.' }
+          $ErrorActionPreference = 'Stop'
+          vpk pack --packId Haedus --packVersion $version --packDir publish --mainExe Haedus.App.exe --packTitle Haedus --releaseNotes "docs/releases/$version.md" --outputDir installer
+          if ($LASTEXITCODE -ne 0) { throw 'vpk pack fallito' }
+          # Installer non firmato (ADR-0005): si pubblicano i checksum per la verifica manuale. Terminazioni LF.
+          $sums = Get-ChildItem installer -File | Get-FileHash -Algorithm SHA256 |
+              ForEach-Object { "$($_.Hash.ToLowerInvariant())  $(Split-Path $_.Path -Leaf)" }
+          [IO.File]::WriteAllText((Join-Path $PWD 'installer/SHA256SUMS.txt'), (($sums -join "`n") + "`n"), [Text.UTF8Encoding]::new($false))
+          Get-Content installer/SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ steps.meta.outputs.version }}
+          path: installer
+          if-no-files-found: error
+
+      - name: Release GitHub
+        if: ${{ !inputs.dry_run }}
+        shell: pwsh
+        run: |
+          $version = '${{ steps.meta.outputs.version }}'
+          $files = Get-ChildItem installer -File | ForEach-Object FullName
+          $extra = @()
+          if ($version -like '*-*') { $extra += '--prerelease' }
+          gh release create "v$version" @files --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "Haedus $version" --notes-file "docs/releases/$version.md" @extra
+          if ($LASTEXITCODE -ne 0) { throw 'gh release create fallito' }
+
+  # Dopo la pubblicazione: l'app deve vedere la release appena creata e scaricarne il pacchetto (ADR-0008).
+  verify-update:
+    name: Verifica del feed di aggiornamento
+    needs: installer
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Test contro GitHub vero
+        env:
+          HAEDUS_TEST_GITHUB: download
+          HAEDUS_TEST_GITHUB_INSTALLED: "0.0.1"
+          HAEDUS_TEST_GITHUB_EXPECTED: ${{ needs.installer.outputs.version }}
+        run: dotnet test tests/Haedus.Updates.Tests --nologo --filter GithubReleaseTests
+
+  docker:
+    name: Immagine Docker del server (GHCR)
+    needs: installer
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build e push
+        env:
+          VERSION: ${{ needs.installer.outputs.version }}
+        run: |
+          set -euo pipefail
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/haedus-server"
+          echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          tags=(-t "$image:$VERSION")
+          # «latest» solo per le versioni stabili.
+          case "$VERSION" in *-*) ;; *) tags+=(-t "$image:latest") ;; esac
+          docker build "${tags[@]}" --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" --label "org.opencontainers.image.version=$VERSION" .
+          docker push --all-tags "$image"
