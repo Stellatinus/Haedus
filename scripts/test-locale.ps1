@@ -9,7 +9,7 @@
   4. Con -Docker: costruisce l'immagine, avvia il container con un token casuale e controlla porta, token e /healthz
   6. Con -Github: dopo una release, controlla su GitHub vero che l'app la veda e ne scarichi il pacchetto (usa la rete)
   5. Con -Feed: crea con `vpk` un feed Velopack di prova (0.1.0 → 0.2.0, con delta) e prova il servizio di aggiornamento
-  Per la trascrizione reale imposta CODEXVTT_TEST_MODEL e CODEXVTT_TEST_AUDIO (vedi tests/CodexVtt.Integration.Tests).
+  Per la trascrizione reale imposta HAEDUS_TEST_MODEL e HAEDUS_TEST_AUDIO (vedi tests/Haedus.Integration.Tests).
 
 .EXAMPLE
   .\scripts\test-locale.ps1                  # controlli di base
@@ -41,7 +41,7 @@ function Step([string]$name, [scriptblock]$body) {
     }
 }
 
-Step 'Test .NET (soluzione)' { dotnet test CodexVtt.slnx --nologo }
+Step 'Test .NET (soluzione)' { dotnet test Haedus.slnx --nologo }
 
 Push-Location ui
 Step 'UI: dipendenze' { npm ci }
@@ -51,15 +51,15 @@ if (-not $SkipApp) { Step 'UI: build per l''app' { npm run build:app } }
 Pop-Location
 
 if (-not $SkipApp) {
-    Step 'Build app Windows' { dotnet build src/CodexVtt.App/CodexVtt.App.csproj --nologo }
+    Step 'Build app Windows' { dotnet build src/Haedus.App/Haedus.App.csproj --nologo }
 }
 
 if ($Docker) {
     Step 'Docker: immagine e container' {
         $token = [guid]::NewGuid().ToString('N')
-        $name = "codexvtt-test-$([guid]::NewGuid().ToString('N').Substring(0, 8))"
-        docker build -t codexvtt-server:test . ; if ($LASTEXITCODE -ne 0) { throw 'build dell''immagine fallita' }
-        docker run -d --name $name -p 127.0.0.1:5186:5185 -e "CodexVtt__AccessToken=$token" codexvtt-server:test | Out-Null
+        $name = "haedus-test-$([guid]::NewGuid().ToString('N').Substring(0, 8))"
+        docker build -t haedus-server:test . ; if ($LASTEXITCODE -ne 0) { throw 'build dell''immagine fallita' }
+        docker run -d --name $name -p 127.0.0.1:5186:5185 -e "Haedus__AccessToken=$token" haedus-server:test | Out-Null
         try {
             $ok = $false
             for ($i = 0; $i -lt 30 -and -not $ok; $i++) {
@@ -69,7 +69,7 @@ if ($Docker) {
             if (-not $ok) { throw '/healthz non risponde' }
             $senza = curl.exe -s -o NUL -w '%{http_code}' http://127.0.0.1:5186/
             if ($senza -ne '401') { throw "senza token atteso 401, ricevuto $senza" }
-            $con = curl.exe -s -o NUL -w '%{http_code}' -b "codexvtt_access=$token" http://127.0.0.1:5186/
+            $con = curl.exe -s -o NUL -w '%{http_code}' -b "haedus_access=$token" http://127.0.0.1:5186/
             if ($con -ne '200') { throw "con token atteso 200, ricevuto $con" }
             Write-Host 'Container ok: /healthz 200, senza token 401, con token 200'
             $global:LASTEXITCODE = 0
@@ -83,7 +83,7 @@ if ($Docker) {
 if ($Feed) {
     Step 'Aggiornamenti: feed Velopack reale' {
         if (-not (Get-Command vpk -ErrorAction SilentlyContinue)) { dotnet tool install -g vpk --version 1.2.161 }
-        $work = Join-Path ([IO.Path]::GetTempPath()) "codexvtt-feed-$([guid]::NewGuid().ToString('N').Substring(0, 8))"
+        $work = Join-Path ([IO.Path]::GetTempPath()) "haedus-feed-$([guid]::NewGuid().ToString('N').Substring(0, 8))"
         New-Item -ItemType Directory $work, "$work\app" | Out-Null
         try {
             Set-Content "$work\app\Tiny.csproj" '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><AssemblyName>Tiny</AssemblyName></PropertyGroup><ItemGroup><PackageReference Include="Velopack" Version="1.2.161" /></ItemGroup></Project>'
@@ -91,14 +91,14 @@ if ($Feed) {
             foreach ($v in '0.1.0', '0.2.0') {
                 dotnet publish "$work\app" -c Release -r win-x64 --self-contained -p:Version=$v -o "$work\pub$v" | Out-Null
                 Set-Content "$work\n$v.md" "# Novità $v"
-                vpk pack --packId CodexVTT --packVersion $v --packDir "$work\pub$v" --mainExe Tiny.exe --packTitle CodexVTT --releaseNotes "$work\n$v.md" --outputDir "$work\feed" | Out-Null
+                vpk pack --packId Haedus --packVersion $v --packDir "$work\pub$v" --mainExe Tiny.exe --packTitle Haedus --releaseNotes "$work\n$v.md" --outputDir "$work\feed" | Out-Null
                 if ($LASTEXITCODE -ne 0) { throw "vpk pack $v fallito" }
             }
-            $env:CODEXVTT_TEST_FEED = "$work\feed"
-            dotnet test tests/CodexVtt.Updates.Tests --nologo --filter RealFeedTests
+            $env:HAEDUS_TEST_FEED = "$work\feed"
+            dotnet test tests/Haedus.Updates.Tests --nologo --filter RealFeedTests
         }
         finally {
-            $env:CODEXVTT_TEST_FEED = $null
+            $env:HAEDUS_TEST_FEED = $null
             Remove-Item $work -Recurse -Force -ErrorAction SilentlyContinue
         }
     }
@@ -106,9 +106,9 @@ if ($Feed) {
 
 if ($Github) {
     Step 'Aggiornamenti: release vera su GitHub' {
-        $env:CODEXVTT_TEST_GITHUB = 'download'
-        try { dotnet test tests/CodexVtt.Updates.Tests --nologo --filter GithubReleaseTests }
-        finally { $env:CODEXVTT_TEST_GITHUB = $null }
+        $env:HAEDUS_TEST_GITHUB = 'download'
+        try { dotnet test tests/Haedus.Updates.Tests --nologo --filter GithubReleaseTests }
+        finally { $env:HAEDUS_TEST_GITHUB = $null }
     }
 }
 

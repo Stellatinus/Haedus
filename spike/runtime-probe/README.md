@@ -35,7 +35,7 @@ Testo atteso per `jfk.wav`: *"And so my fellow Americans, ask not what your coun
 ## Uso diretto
 
 ```text
-codexvtt-runtime-probe --model <ggml.bin> --audio <file.wav 16kHz mono>
+haedus-runtime-probe --model <ggml.bin> --audio <file.wav 16kHz mono>
                      [--sha256 <hex>] [--language auto|it|en|...] [--threads N] [--gpu]
                      [--cancel-after <secondi>] [--json <report.json>] [--network-check]
 ```

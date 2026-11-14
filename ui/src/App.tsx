@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { BridgeClient } from './bridge/client';
 import type { ExportFormat } from './bridge/protocol';
+import { ErrorBoundary } from './ErrorBoundary';
 import { FileList, type Selection } from './components/FileList';
 import { HistoryPanel } from './components/HistoryPanel';
 import { Icon, type IconName } from './components/Icon';
@@ -9,12 +10,12 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { StartPage } from './components/StartPage';
 import { Workbench } from './components/Workbench';
 import { I18nProvider, resolveLocale, useI18n } from './i18n/i18n';
-import { useCodexVtt, type CodexVttState } from './state/useCodexVtt';
+import { useHaedus, type HaedusState } from './state/useHaedus';
 
 type Tab = 'home' | 'history' | 'models' | 'settings';
 
 export function App({ client }: { client: BridgeClient }) {
-  const app = useCodexVtt(client);
+  const app = useHaedus(client);
   const locale = resolveLocale(app.settings?.uiLanguage);
   const theme = app.settings?.theme;
   const palette = app.settings?.palette;
@@ -46,7 +47,7 @@ export function App({ client }: { client: BridgeClient }) {
 
 const systemPrefersDark = () => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-function Shell({ app }: { app: CodexVttState }) {
+function Shell({ app }: { app: HaedusState }) {
   const { t, describeError } = useI18n();
   const [tab, setTab] = useState<Tab>('home');
   const [selection, setSelection] = useState<Selection>(null);
@@ -99,7 +100,7 @@ function Shell({ app }: { app: CodexVttState }) {
     <div className="app">
       <header className="nav">
         <div className="brand" title={t('localBadgeTitle')}>
-          <i aria-hidden="true">C</i>CodexVTT
+          <i aria-hidden="true">C</i>Haedus
         </div>
         <nav className="nav__tabs" aria-label={t('sections')}>
           {tabs.map((item) => (
@@ -202,7 +203,9 @@ function Shell({ app }: { app: CodexVttState }) {
                 />
               )
             ) : (
-              <Workbench app={app} selection={selection} onDirtyChange={setDirty} onCopied={() => showToast(t('copied'))} />
+              <ErrorBoundary key={selection === null ? 'none' : JSON.stringify(selection)} label={t('renderError')} retry={t('renderRetry')}>
+                <Workbench app={app} selection={selection} onDirtyChange={setDirty} onCopied={() => showToast(t('copied'))} />
+              </ErrorBoundary>
             ))}
           {tab === 'history' && (
             <HistoryPanel
@@ -226,7 +229,7 @@ function Shell({ app }: { app: CodexVttState }) {
   );
 }
 
-function ExportMenu({ app, dirty }: { app: CodexVttState; dirty: boolean }) {
+function ExportMenu({ app, dirty }: { app: HaedusState; dirty: boolean }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);

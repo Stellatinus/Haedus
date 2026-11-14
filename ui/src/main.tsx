@@ -9,7 +9,7 @@ import { createI18n, resolveLocale } from './i18n/i18n';
 import { previewCollections, previewHistory, previewTitles } from './preview/seed';
 import './styles.css';
 
-// Nell'app MAUI c'è sempre HybridWebView; la build `--mode server` parla con CodexVtt.Server via WebSocket.
+// Nell'app MAUI c'è sempre HybridWebView; la build `--mode server` parla con Haedus.Server via WebSocket.
 // Il mock serve solo per lo sviluppo nel browser e per la preview statica (`npm run build:preview`), che parte con dati di esempio.
 const preview = import.meta.env.MODE === 'preview';
 const server = import.meta.env.MODE === 'server';

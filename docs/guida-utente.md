@@ -1,6 +1,6 @@
-# Guida rapida di CodexVTT
+# Guida rapida di Haedus
 
-CodexVTT trascrive file audio in testo **sul tuo PC**, con i modelli Whisper di OpenAI. Audio e testo non vengono mai inviati su Internet.
+Haedus trascrive file audio in testo **sul tuo PC**, con i modelli Whisper di OpenAI. Audio e testo non vengono mai inviati su Internet.
 
 ## Requisiti
 
@@ -10,14 +10,14 @@ CodexVTT trascrive file audio in testo **sul tuo PC**, con i modelli Whisper di 
 
 ## Installazione
 
-1. Scarica `CodexVTT-win-Setup.exe` dalla pagina delle release.
-2. Avvialo: CodexVTT si installa nel tuo profilo utente, senza privilegi di amministratore.
-3. L'installer non è firmato con un certificato, quindi Windows mostra "Windows ha protetto il PC" (SmartScreen). Prima di procedere, verifica che il checksum SHA-256 del file coincida con quello pubblicato con la release (in PowerShell: `Get-FileHash .\CodexVTT-win-Setup.exe`), poi scegli "Ulteriori informazioni" → "Esegui comunque".
+1. Scarica `Haedus-win-Setup.exe` dalla pagina delle release.
+2. Avvialo: Haedus si installa nel tuo profilo utente, senza privilegi di amministratore.
+3. L'installer non è firmato con un certificato, quindi Windows mostra "Windows ha protetto il PC" (SmartScreen). Prima di procedere, verifica che il checksum SHA-256 del file coincida con quello pubblicato con la release (in PowerShell: `Get-FileHash .\Haedus-win-Setup.exe`), poi scegli "Ulteriori informazioni" → "Esegui comunque".
 
 ## Primo avvio: scegliere un modello
 
 1. Apri la sezione **Modelli**: vedi le caratteristiche del PC e il modello consigliato, con il motivo della scelta.
-2. Premi **Scarica…** sul modello che preferisci. CodexVTT mostra la dimensione e il sito di provenienza (huggingface.co) e chiede conferma.
+2. Premi **Scarica…** sul modello che preferisci. Haedus mostra la dimensione e il sito di provenienza (huggingface.co) e chiede conferma.
 3. Al termine il modello viene verificato (SHA-256) e diventa **Pronto**.
 
 Senza connessione puoi usare **Importa modello da file…** con un file `ggml-*.bin` ufficiale copiato da un altro computer.
@@ -32,7 +32,7 @@ Senza connessione puoi usare **Importa modello da file…** con un file `ggml-*.
 | Canary 1B v2 *(anteprima)* | ~1,4 GB | Qualità simile a Parakeet, più lento; **richiede di scegliere la lingua** |
 | Cohere Transcribe *(anteprima)* | ~2,9 GB | 14 lingue, pesante; **richiede di scegliere la lingua**, senza tempi per frase |
 
-I modelli *anteprima* sono motori nuovi, provati su pochi PC: non vengono mai consigliati in automatico, ma li puoi scegliere. Girano sulla CPU. Accanto a ogni modello vedi l'**affidabilità** per l'italiano (100 meno l'errore sulle parole) quando c'è un valore noto: oggi è quello pubblicato dagli autori del modello, non una misura di CodexVTT, e su registrazioni rumorose è più bassa. I modelli di NVIDIA richiedono di citare l'autore (licenza CC-BY-4.0): l'indicazione è sulla scheda del modello.
+I modelli *anteprima* sono motori nuovi, provati su pochi PC: non vengono mai consigliati in automatico, ma li puoi scegliere. Girano sulla CPU. Accanto a ogni modello vedi l'**affidabilità** per l'italiano (100 meno l'errore sulle parole) quando c'è un valore noto: oggi è quello pubblicato dagli autori del modello, non una misura di Haedus, e su registrazioni rumorose è più bassa. I modelli di NVIDIA richiedono di citare l'autore (licenza CC-BY-4.0): l'indicazione è sulla scheda del modello.
 
 ### Scheda video (GPU)
 
@@ -67,20 +67,20 @@ Whisper può sbagliare o inventare frasi su silenzi o musica: ricontrolla i pass
 
 ## Cronologia
 
-Ogni trascrizione completata viene salvata automaticamente nella cartella **Documenti\CodexVTT\history**, in due file con lo stesso nome (data, ora e nome dell'audio):
+Ogni trascrizione completata viene salvata automaticamente nella cartella **Documenti\Haedus\history**, in due file con lo stesso nome (data, ora e nome dell'audio):
 
 - un `.txt` con il testo, che puoi aprire con qualunque editor;
-- un `.json` con i segmenti e i tempi, che CodexVTT usa per riaprire la trascrizione.
+- un `.json` con i segmenti e i tempi, che Haedus usa per riaprire la trascrizione.
 
 Dalla sezione **Cronologia** (o dall'elenco **Recenti** di Home) puoi riaprire una trascrizione, esportarla di nuovo, eliminarla oppure aprire la cartella in Esplora file. Con **Cambia cartella…** scegli dove salvarle.
 
-Se su Windows è attivo **Accesso alle cartelle controllato** (Sicurezza di Windows → Protezione da virus e minacce → Protezione ransomware), Defender può impedire a CodexVTT di scrivere in `Documenti`. In quel caso CodexVTT te lo dice, mette la trascrizione al sicuro in `%LOCALAPPDATA%\CodexVTT.Data\history-recovery` e ti propone **Cambia cartella…**. Per usare `Documenti` consenti `CodexVtt.App.exe` tra le app consentite; lo stesso vale per l'export nella cartella proposta dal dialogo di salvataggio.
+Se su Windows è attivo **Accesso alle cartelle controllato** (Sicurezza di Windows → Protezione da virus e minacce → Protezione ransomware), Defender può impedire a Haedus di scrivere in `Documenti`. In quel caso Haedus te lo dice, mette la trascrizione al sicuro in `%LOCALAPPDATA%\Haedus.Data\history-recovery` e ti propone **Cambia cartella…**. Per usare `Documenti` consenti `Haedus.App.exe` tra le app consentite; lo stesso vale per l'export nella cartella proposta dal dialogo di salvataggio.
 
-Quando scegli una cartella con **Cambia cartella…** e **Testa cartella** non riesce a scrivere, CodexVTT mostra «Windows ha negato la scrittura», lo stato di Accesso alle cartelle controllato (se leggibile) e il percorso dell'app da consentire in Sicurezza di Windows → Protezione da virus e minacce → Protezione ransomware → Consenti app tramite Accesso alle cartelle controllato. Dopo averla aggiunta, rifai il test.
+Quando scegli una cartella con **Cambia cartella…** e **Testa cartella** non riesce a scrivere, Haedus mostra «Windows ha negato la scrittura», lo stato di Accesso alle cartelle controllato (se leggibile) e il percorso dell'app da consentire in Sicurezza di Windows → Protezione da virus e minacce → Protezione ransomware → Consenti app tramite Accesso alle cartelle controllato. Dopo averla aggiunta, rifai il test.
 
-**Se il blocco non compare in Cronologia protezione.** CodexVTT non può scrivere in quella cronologia né leggerla: la riempie solo Defender, e per questo tipo di blocco non sempre crea una voce visibile (o la mostra con un filtro diverso da quello impostato). Il registro affidabile è Visualizzatore eventi → Registri applicazioni e servizi → Microsoft → Windows → Windows Defender → Operational, evento **1123** (accesso bloccato) o **1124** (solo audit); può servire eseguirlo come amministratore. Se l'evento c'è, il nome dell'app e il percorso indicano cosa autorizzare.
+**Se il blocco non compare in Cronologia protezione.** Haedus non può scrivere in quella cronologia né leggerla: la riempie solo Defender, e per questo tipo di blocco non sempre crea una voce visibile (o la mostra con un filtro diverso da quello impostato). Il registro affidabile è Visualizzatore eventi → Registri applicazioni e servizi → Microsoft → Windows → Windows Defender → Operational, evento **1123** (accesso bloccato) o **1124** (solo audit); può servire eseguirlo come amministratore. Se l'evento c'è, il nome dell'app e il percorso indicano cosa autorizzare.
 
-Se la cartella è sincronizzata da OneDrive o da un servizio simile, le trascrizioni verranno copiate nel cloud da quel servizio, non da CodexVTT: scegli una cartella non sincronizzata se vuoi che restino solo sul PC.
+Se la cartella è sincronizzata da OneDrive o da un servizio simile, le trascrizioni verranno copiate nel cloud da quel servizio, non da Haedus: scegli una cartella non sincronizzata se vuoi che restino solo sul PC.
 
 ## Esportare
 
@@ -88,36 +88,36 @@ Il pulsante **Esporta** in alto a destra apre il menu: **Esporta TXT** salva il 
 
 ## Lingua dell'interfaccia
 
-CodexVTT è in italiano e in inglese. Per impostazione predefinita usa la lingua di Windows; puoi cambiarla in **Impostazioni** → **Lingua dell'interfaccia**.
+Haedus è in italiano e in inglese. Per impostazione predefinita usa la lingua di Windows; puoi cambiarla in **Impostazioni** → **Lingua dell'interfaccia**.
 
 **Aspetto** (in **Impostazioni**) decide se usare il tema chiaro, quello scuro o seguire Windows; il pulsante con la luna o il sole in alto a destra li alterna al volo.
 
 ## Privacy
 
 - La trascrizione avviene interamente sul tuo PC; funziona anche senza Internet.
-- CodexVTT si collega alla rete solo per scaricare un modello quando lo chiedi (verso Hugging Face) e per cercare nuove versioni su GitHub quando premi «Controlla aggiornamenti» in Impostazioni, o all'avvio se attivi tu la casella corrispondente (spenta di default). Nessun audio né testo viene inviato.
+- Haedus si collega alla rete solo per scaricare un modello quando lo chiedi (verso Hugging Face) e per cercare nuove versioni su GitHub quando premi «Controlla aggiornamenti» in Impostazioni, o all'avvio se attivi tu la casella corrispondente (spenta di default). Nessun audio né testo viene inviato.
 - Nessun account, nessuna telemetria.
-- I log diagnostici restano in `%LOCALAPPDATA%\CodexVTT.Data\logs` e non contengono il testo trascritto.
+- I log diagnostici restano in `%LOCALAPPDATA%\Haedus.Data\logs` e non contengono il testo trascritto.
 
 ## Dove sono i file
 
 | Cosa | Percorso |
 |---|---|
-| Modelli | `%LOCALAPPDATA%\CodexVTT.Data\models` |
-| Impostazioni | `%LOCALAPPDATA%\CodexVTT.Data\settings.json` |
-| Log | `%LOCALAPPDATA%\CodexVTT.Data\logs` |
-| Cronologia delle trascrizioni | `Documenti\CodexVTT\history` (modificabile) |
+| Modelli | `%LOCALAPPDATA%\Haedus.Data\models` |
+| Impostazioni | `%LOCALAPPDATA%\Haedus.Data\settings.json` |
+| Log | `%LOCALAPPDATA%\Haedus.Data\logs` |
+| Cronologia delle trascrizioni | `Documenti\Haedus\history` (modificabile) |
 
-Aggiornare CodexVTT non cancella modelli, impostazioni e log.
+Aggiornare Haedus non cancella modelli, impostazioni e log.
 
 ## Disinstallazione
 
-Disinstalla CodexVTT da **Impostazioni → App installate** (o dal Pannello di controllo). Durante la disinstallazione una procedura guidata chiede:
+Disinstalla Haedus da **Impostazioni → App installate** (o dal Pannello di controllo). Durante la disinstallazione una procedura guidata chiede:
 
-1. se eliminare anche i **dati interni** di CodexVTT: modelli Whisper scaricati (con la loro dimensione), log, impostazioni e file temporanei in `%LOCALAPPDATA%\CodexVTT.Data`;
+1. se eliminare anche i **dati interni** di Haedus: modelli Whisper scaricati (con la loro dimensione), log, impostazioni e file temporanei in `%LOCALAPPDATA%\Haedus.Data`;
 2. una conferma definitiva, se hai risposto sì.
 
-Il pulsante predefinito è **No**: senza una risposta esplicita i dati restano sul PC. La cronologia in `Documenti\CodexVTT` non viene mai toccata: è un file tuo, da cancellare a mano se vuoi.
+Il pulsante predefinito è **No**: senza una risposta esplicita i dati restano sul PC. La cronologia in `Documenti\Haedus` non viene mai toccata: è un file tuo, da cancellare a mano se vuoi.
 
 ## Problemi comuni
 

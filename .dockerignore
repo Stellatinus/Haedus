@@ -7,6 +7,6 @@ spike/
 tests/
 ui/dist/
 ui/dist-preview/
-src/CodexVtt.App/
-src/CodexVtt.Server/wwwroot/
+src/Haedus.App/
+src/Haedus.Server/wwwroot/
 *.md

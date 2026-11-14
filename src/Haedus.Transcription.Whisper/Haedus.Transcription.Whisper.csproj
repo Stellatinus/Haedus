@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Haedus.Transcription.Whisper</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Haedus.Core\Haedus.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ADR-0002: runtime CPU + fallback NoAvx; nessun runtime GPU in V1. -->
+    <PackageReference Include="Whisper.net" />
+    <PackageReference Include="Whisper.net.Runtime" />
+    <PackageReference Include="Whisper.net.Runtime.NoAvx" />
+    <!-- ADR-0009: GPU con Vulkan (NVIDIA, AMD, Intel); si prova solo se il PC ha il driver Vulkan, altrimenti CPU. -->
+    <PackageReference Include="Whisper.net.Runtime.Vulkan" />
+  </ItemGroup>
+
+</Project>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { palettes, type Palette } from '../bridge/protocol';
 import { transcriptionLanguages, useI18n, type MessageKey } from '../i18n/i18n';
-import type { CodexVttState } from '../state/useCodexVtt';
+import type { HaedusState } from '../state/useHaedus';
 import { FolderControl, FolderTestedMark } from './FolderControl';
 
 /** Campioni mostrati nel selettore: i colori di ciascun tema, dal più chiaro al più scuro. */
@@ -13,7 +13,7 @@ const swatches: Record<Palette | 'default', string[]> = {
   ciliegia: ['#FFD9D9', '#E8B7C2', '#670626', '#3a0a1d', '#2c0614'],
 };
 
-export function SettingsPanel({ app }: { app: CodexVttState }) {
+export function SettingsPanel({ app }: { app: HaedusState }) {
   const { t } = useI18n();
   const s = app.settings;
   // Il cursore si sposta liberamente e il valore si salva quando lo si rilascia, non a ogni scatto.

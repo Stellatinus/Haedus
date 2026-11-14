@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from 'react';
 import type { BenchmarkEntry, BenchmarkReferenceInfo, BenchmarkScenario, BenchmarkStale } from '../bridge/protocol';
 import { useI18n, type MessageKey } from '../i18n/i18n';
-import type { CodexVttState } from '../state/useCodexVtt';
+import type { HaedusState } from '../state/useHaedus';
 import { ConfirmDialog } from './ConfirmDialog';
 
 interface ModelRow {
@@ -41,8 +41,8 @@ function combine(entries: BenchmarkEntry[]): ModelRow[] {
  * questo PC. I brani ufficiali sono in italiano e in inglese, puliti e con rumore, così l'affidabilità si legge per lingua
  * e per condizione. Parte solo da un clic, si può annullare e scarica i brani ufficiali solo se lo chiedi.
  */
-export function BenchPanel({ app }: { app: CodexVttState }) {
-  const { t, formatShortDate, formatBytes, languageName } = useI18n();
+export function BenchPanel({ app }: { app: HaedusState }) {
+  const { t, formatShortDate, formatBytes, formatNumber, languageName } = useI18n();
   const [reference, setReference] = useState<BenchmarkReferenceInfo>();
   const [asking, setAsking] = useState(false);
   // Cosa provare: lingue e condizioni a spunta. Di base la lingua scelta e l'inglese, pulito e con rumore.
@@ -72,7 +72,7 @@ export function BenchPanel({ app }: { app: CodexVttState }) {
     if (chosenFiles.every((f) => f.cached)) void app.startBenchmark(true, selection);
     else setAsking(true);
   };
-  const number = (value: number) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(value);
+  const number = formatNumber;
   const rows = combine(benchmark.entries);
   const languages = [...new Set(benchmark.reliability.map((r) => r.language))].sort();
   const reliabilityOf = (modelId: string, language: string) => benchmark.reliability.find((r) => r.modelId === modelId && r.language === language);

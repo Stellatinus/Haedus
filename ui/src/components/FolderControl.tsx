@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { useI18n, type MessageKey } from '../i18n/i18n';
-import type { CodexVttState } from '../state/useCodexVtt';
+import type { HaedusState } from '../state/useHaedus';
 import type { FolderTestResult } from '../bridge/protocol';
 
 type Check = { phase: 'untested' } | { phase: 'testing' } | { phase: 'failed'; reason: string; detail?: FolderTestResult };
@@ -10,7 +10,7 @@ type Check = { phase: 'untested' } | { phase: 'testing' } | { phase: 'failed'; r
  * «Testa cartella» non riesce a scrivere, rileggere e cancellare un file di prova. Se il test fallisce la
  * cartella non viene salvata e resta la precedente.
  */
-export function FolderControl({ app, compact = false }: { app: CodexVttState; compact?: boolean }) {
+export function FolderControl({ app, compact = false }: { app: HaedusState; compact?: boolean }) {
   const { t } = useI18n();
   const [pending, setPending] = useState<string>();
   const [check, setCheck] = useState<Check>({ phase: 'untested' });
@@ -98,7 +98,7 @@ export function FolderControl({ app, compact = false }: { app: CodexVttState; co
 }
 
 /** Spunta verde permanente accanto alla cartella che ha superato il test (finché non cambia o non smette di scrivere). */
-export function FolderTestedMark({ app }: { app: CodexVttState }) {
+export function FolderTestedMark({ app }: { app: HaedusState }) {
   const { t, formatShortDate } = useI18n();
   const testedAt = app.settings?.historyDirectoryTestedAt;
   if (!app.settings?.historyDirectory || !testedAt) return null;

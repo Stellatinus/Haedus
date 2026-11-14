@@ -5,8 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
-    <Version>2.2.1</Version>
-    <Authors>CodexVTT</Authors>
-    <Product>CodexVTT</Product>
+    <Version>2.3.0</Version>
+    <Authors>Haedus</Authors>
+    <Product>Haedus</Product>
   </PropertyGroup>
 </Project>

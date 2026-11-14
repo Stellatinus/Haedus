@@ -1,8 +1,8 @@
 <#
 .SYNOPSIS
-  Installa CodexVTT Server come servizio di Windows (parte all'avvio del PC, funziona anche con la pagina chiusa).
+  Installa Haedus Server come servizio di Windows (parte all'avvio del PC, funziona anche con la pagina chiusa).
 .DESCRIPTION
-  Pubblica il server (con la UI), lo copia in una cartella e registra il servizio "CodexVTT".
+  Pubblica il server (con la UI), lo copia in una cartella e registra il servizio "Haedus".
   Richiede PowerShell come amministratore. Il servizio gira con l'account indicato (default: quello che esegue
   lo script), perché modelli, impostazioni e cronologia stanno nel profilo di quell'account.
 .EXAMPLE
@@ -10,7 +10,7 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$Destinazione = "$env:ProgramFiles\CodexVTT Server",
+    [string]$Destinazione = "$env:ProgramFiles\Haedus Server",
     [string]$Urls = 'http://127.0.0.1:5185',
     [string]$Token,
     [string]$Account = "$env:USERDOMAIN\$env:USERNAME",
@@ -18,7 +18,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$nome = 'CodexVTT'
+$nome = 'Haedus'
 
 $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $admin) { throw 'Esegui PowerShell come amministratore.' }
@@ -47,12 +47,12 @@ finally { Pop-Location }
 if (Get-Service $nome -ErrorAction SilentlyContinue) {
     Stop-Service $nome -ErrorAction SilentlyContinue
 }
-dotnet publish (Join-Path $repo 'src\CodexVtt.Server\CodexVtt.Server.csproj') -c Release -r win-x64 --self-contained -o $Destinazione
+dotnet publish (Join-Path $repo 'src\Haedus.Server\Haedus.Server.csproj') -c Release -r win-x64 --self-contained -o $Destinazione
 if ($LASTEXITCODE -ne 0) { throw 'Pubblicazione non riuscita.' }
 
 if (-not (Get-Service $nome -ErrorAction SilentlyContinue)) {
     $credenziali = Get-Credential -UserName $Account -Message "Password dell'account con cui gira il servizio (i dati stanno nel suo profilo)"
-    New-Service -Name $nome -DisplayName 'CodexVTT Server' -BinaryPathName "`"$Destinazione\CodexVtt.Server.exe`"" `
+    New-Service -Name $nome -DisplayName 'Haedus Server' -BinaryPathName "`"$Destinazione\Haedus.Server.exe`"" `
         -StartupType Automatic -Credential $credenziali -Description 'Trascrizione locale con Whisper, interfaccia web.' | Out-Null
 }
 else {
@@ -62,10 +62,10 @@ else {
 # Indirizzo e token in variabili d'ambiente del servizio (non nella riga di comando, visibile a tutti).
 # "Urls" (non ASPNETCORE_URLS): appsettings.json ha lo stesso nome e avrebbe la precedenza su ASPNETCORE_*.
 $ambiente = @("Urls=$Urls")
-if ($Token) { $ambiente += "CodexVtt__AccessToken=$Token" }
+if ($Token) { $ambiente += "Haedus__AccessToken=$Token" }
 Set-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Services\$nome" -Name Environment -Value $ambiente -Type MultiString
 sc.exe failure $nome reset= 86400 actions= restart/5000/restart/30000// | Out-Null
 
 Start-Service $nome
-Write-Host "CodexVTT Server attivo su $Urls"
+Write-Host "Haedus Server attivo su $Urls"
 if ($Token) { Write-Host 'Prima apertura da un altro PC: <indirizzo>/?token=<il tuo token> (poi il browser lo ricorda).' }

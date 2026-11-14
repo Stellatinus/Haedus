@@ -23,7 +23,7 @@ whisper.cpp richiede PCM mono a 16 kHz. Gli utenti caricheranno MP3, M4A, WAV e 
 
 ## Decisione
 
-1. **V1 usa Media Foundation** dietro l'interfaccia `IAudioDecoder` del core. L'implementazione `CodexVtt.Audio.Windows` è basata su NAudio (`MediaFoundationReader` + resampler) e produce PCM float 16 kHz mono in streaming. In #5 si può scegliere `AudioGraph`/WinRT se più adatto.
+1. **V1 usa Media Foundation** dietro l'interfaccia `IAudioDecoder` del core. L'implementazione `Haedus.Audio.Windows` è basata su NAudio (`MediaFoundationReader` + resampler) e produce PCM float 16 kHz mono in streaming. In #5 si può scegliere `AudioGraph`/WinRT se più adatto.
 2. **Formati V1** (da confermare in #2 con fixture per ciascuno):
    - WAV, MP3, M4A/AAC, WMA, FLAC: decodificatori presenti in Windows 11;
    - OGG/Opus: solo se il codec è disponibile sul sistema. Altrimenti l'errore `audio_codec_missing` indica come installarlo;

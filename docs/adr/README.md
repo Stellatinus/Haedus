@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-Registro delle decisioni architetturali di CodexVTT. Ogni ADR descrive contesto, opzioni, decisione e conseguenze. Uno stato `Accettato` si cambia solo con un nuovo ADR che lo sostituisce.
+Registro delle decisioni architetturali di Haedus. Ogni ADR descrive contesto, opzioni, decisione e conseguenze. Uno stato `Accettato` si cambia solo con un nuovo ADR che lo sostituisce.
 
 | ADR | Titolo | Stato |
 |---|---|---|
