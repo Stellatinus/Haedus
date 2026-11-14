@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { BridgeClient } from './bridge/client';
 import type { ExportFormat } from './bridge/protocol';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -40,8 +40,20 @@ export function App({ client }: { client: BridgeClient }) {
 
   return (
     <I18nProvider locale={locale}>
-      <Shell app={app} />
+      <RootBoundary>
+        <Shell app={app} />
+      </RootBoundary>
     </I18nProvider>
+  );
+}
+
+/** Ultima rete di sicurezza (issue #79): un errore fuori dal banco di lavoro non lascia la finestra bianca. */
+function RootBoundary({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
+  return (
+    <ErrorBoundary label={t('renderError')} retry={t('renderRetry')} reload={t('renderReload')}>
+      {children}
+    </ErrorBoundary>
   );
 }
 

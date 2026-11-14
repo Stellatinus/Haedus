@@ -81,9 +81,10 @@ export function useHaedus(client: BridgeClient) {
   const queue = queueState.items;
   const queueRunning = queueState.running;
 
-  const guard = useCallback(async <T>(action: () => Promise<T>): Promise<T | undefined> => {
+  // `clear: false` per le letture di sfondo: non devono cancellare un errore nato in un altro flusso (issue #80).
+  const guard = useCallback(async <T>(action: () => Promise<T>, clear = true): Promise<T | undefined> => {
     try {
-      setError(undefined);
+      if (clear) setError(undefined);
       return await action();
     } catch (e) {
       setError(toUiError(e));
@@ -135,6 +136,18 @@ export function useHaedus(client: BridgeClient) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Errori non gestiti fuori da React (promesse perse, eccezioni dei listener): si mostrano nel banner invece di sparire.
+  useEffect(() => {
+    const onRejection = (e: PromiseRejectionEvent) => setError(toUiError(e.reason));
+    const onError = (e: ErrorEvent) => setError(toUiError(e.error ?? e.message));
+    window.addEventListener('unhandledrejection', onRejection);
+    window.addEventListener('error', onError);
+    return () => {
+      window.removeEventListener('unhandledrejection', onRejection);
+      window.removeEventListener('error', onError);
+    };
+  }, []);
 
   useEffect(() => {
     const report = (e: unknown) => setError(toUiError(e));
@@ -238,6 +251,8 @@ export function useHaedus(client: BridgeClient) {
   }, [client, estimateModelId, pendingKey, benchmark.entries]);
 
   // Nell'app il dialog nativo; nel browser (versione server) il selettore del browser e il caricamento sul server.
+  const benchmarkReference = useCallback(() => guard(() => client.call('benchmark.reference'), false), [client, guard]);
+
   const pickBatch = useCallback(async (): Promise<PickedBatch | null> => {
     if (!client.files) return client.call('audio.pickMany');
     setUploading(true);
@@ -339,7 +354,7 @@ export function useHaedus(client: BridgeClient) {
     /** Stima del tempo dei file in attesa, o `basis: none` se manca una misura valida per il modello scelto. */
     estimate,
     pendingDurations,
-    benchmarkReference: () => guard(() => client.call('benchmark.reference')),
+    benchmarkReference,
     /** Con `useReference` scarica (se manca) il file ufficiale; altrimenti si sceglie un file proprio. */
     startBenchmark: (useReference = false, selection?: { languages: string[]; scenarios: BenchmarkScenario[] }) =>
       guard(async () => {

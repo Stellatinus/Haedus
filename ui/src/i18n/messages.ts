@@ -203,6 +203,7 @@ const it = {
   desktopOnly: 'Haedus deve essere avviato dall’applicazione desktop.',
   renderError: 'Questa schermata ha avuto un problema e non può essere mostrata. I tuoi file non sono stati toccati.',
   renderRetry: 'Riprova',
+  renderReload: 'Ricarica',
 
   // Motivazioni della raccomandazione
   reason_ram_limit: 'RAM totale {total}: si usano modelli che richiedono al massimo {limit}.',
@@ -626,6 +627,7 @@ const en: Record<MessageKey, string> = {
   desktopOnly: 'Haedus must be started from the desktop application.',
   renderError: 'This screen ran into a problem and cannot be shown. Your files have not been touched.',
   renderRetry: 'Try again',
+  renderReload: 'Reload',
 
   reason_ram_limit: '{total} total RAM: using models that need at most {limit}.',
   reason_cpu_budget: '{cores} logical cores: the heaviest model suited to this processor is {model}.',

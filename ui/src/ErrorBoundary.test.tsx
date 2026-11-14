@@ -23,4 +23,19 @@ describe('ErrorBoundary', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Riprova' }));
     expect(screen.getByText('ok')).toBeInTheDocument();
   });
+
+  it('offers a reload button when given one', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const reload = vi.fn();
+    vi.stubGlobal('location', { ...window.location, reload });
+    broken = true;
+    render(
+      <ErrorBoundary label="Problema" retry="Riprova" reload="Ricarica">
+        <Bomb />
+      </ErrorBoundary>,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Ricarica' }));
+    expect(reload).toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
 });
