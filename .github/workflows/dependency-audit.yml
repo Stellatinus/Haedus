@@ -1,0 +1,37 @@
+name: Audit delle dipendenze
+
+# Ogni settimana (e a mano) cerca vulnerabilità note nelle dipendenze NuGet e npm.
+on:
+  schedule:
+    - cron: "43 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: NuGet (progetti compilabili su Linux)
+        run: |
+          set -e
+          fail=0
+          for project in src/Haedus.Core src/Haedus.Bridge src/Haedus.Server src/Haedus.Updates src/Haedus.Models.Download src/Haedus.Transcription.Whisper src/Haedus.Transcription.Sherpa src/Haedus.Audio.FFmpeg; do
+            dotnet restore "$project" --nologo > /dev/null
+            out=$(dotnet list "$project" package --vulnerable --include-transitive 2>&1)
+            echo "$out"
+            if echo "$out" | grep -q "has the following vulnerable packages"; then fail=1; fi
+          done
+          exit $fail
+      - name: npm (solo dipendenze di produzione, gravità alta o critica)
+        working-directory: ui
+        run: npm audit --omit=dev --audit-level=high

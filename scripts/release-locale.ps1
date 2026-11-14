@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Costruisce l'installer e pubblica la release GitHub dal PC Windows, senza usare GitHub Actions.
+  Costruisce l'installer e pubblica la release GitHub dal PC Windows. Alternativa locale al workflow .github/workflows/release.yml.
 
 .DESCRIPTION
   Build della UI, publish self-contained win-x64, runtime VC++ app-local (ADR-0005), pacchetto Velopack,

@@ -48,7 +48,19 @@ dotnet workload install maui-windows
 dotnet build src/Haedus.App -c Debug
 ```
 
-Il repository **non usa GitHub Actions**: i controlli si eseguono dal PC con un solo comando.
+## Integrazione continua e rilascio (GitHub Actions)
+
+| Workflow | Quando | Cosa fa |
+|---|---|---|
+| `ci.yml` | push su `main`, ogni PR | test .NET (Linux), UI (typecheck, test, build app/server/preview), build e test della soluzione su Windows con il workload MAUI, immagine Docker con prova di porta, token e `/healthz` |
+| `release.yml` | a mano (Actions → Release → Run workflow, da `main`) | costruisce l'installer Velopack, i checksum e la release GitHub con le note di `docs/releases/<versione>.md`; poi verifica il feed di aggiornamento e pubblica l'immagine su GHCR. Con «dry_run» (predefinito) non pubblica nulla e lascia l'installer come artefatto |
+| `codeql.yml` | push su `main`, PR, ogni lunedì | analisi statica C# e TypeScript |
+| `dependency-audit.yml` | ogni lunedì, a mano | vulnerabilità note nelle dipendenze NuGet e npm |
+| Dependabot | ogni settimana | aggiornamenti di NuGet, npm, GitHub Actions e immagini Docker |
+
+Per rilasciare: alza `<Version>` in `Directory.Build.props` e `version` in `ui/package.json`, scrivi `docs/releases/<versione>.md`, mergia su `main` e lancia il workflow **Release**.
+
+Gli stessi controlli si possono eseguire anche dal PC con un solo comando:
 
 ```powershell
 .\scripts\test-locale.ps1                  # .NET, UI e build dell'app

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Esegue in locale tutti i controlli che prima faceva la CI (il repository non usa GitHub Actions).
+  Esegue in locale gli stessi controlli della CI (.github/workflows/ci.yml), più quelli che richiedono la rete o il PC.
 
 .DESCRIPTION
   1. Test .NET dell'intera soluzione (unitari, architettura/isolamento di rete, server, aggiornamenti, integrazione)
