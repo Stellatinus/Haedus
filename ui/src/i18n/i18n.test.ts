@@ -16,6 +16,10 @@ describe('i18n', () => {
     }
   });
 
+  it('falls back to the key when a message is missing instead of throwing', () => {
+    expect(createI18n('it').t('chiave_inesistente' as never)).toBe('chiave_inesistente');
+  });
+
   it('resolves the locale from settings or system', () => {
     expect(resolveLocale('en', 'it-IT')).toBe('en');
     expect(resolveLocale(null, 'it-IT')).toBe('it');

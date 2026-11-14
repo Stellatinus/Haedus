@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 
-type Props = { children: ReactNode; label: string; retry: string };
+type Props = { children: ReactNode; label: string; retry: string; reload?: string };
 type State = { failed: boolean };
 
 /**
@@ -26,6 +26,11 @@ export class ErrorBoundary extends Component<Props, State> {
         <button type="button" onClick={() => this.setState({ failed: false })}>
           {this.props.retry}
         </button>
+        {this.props.reload && (
+          <button type="button" onClick={() => window.location.reload()}>
+            {this.props.reload}
+          </button>
+        )}
       </div>
     );
   }

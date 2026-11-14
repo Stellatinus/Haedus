@@ -20,7 +20,7 @@ function format(template: string, params?: Record<string, string | number>): str
 
 export function createI18n(locale: Locale) {
   const numberLocale = locale === 'it' ? 'it-IT' : 'en-US';
-  const t = (key: MessageKey, params?: Record<string, string | number>) => format(messages[locale][key], params);
+  const t = (key: MessageKey, params?: Record<string, string | number>) => format(messages[locale][key] ?? key, params);
 
   /** Nome della lingua nella lingua dell'interfaccia (it → Italiano); un codice sconosciuto resta com'è. */
   const languageName = (code: string) => messages[locale][`lang_${code}` as MessageKey] ?? code;
