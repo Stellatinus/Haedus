@@ -92,7 +92,9 @@ dotnet run --project src/Haedus.Server        # http://127.0.0.1:5185, solo da q
 # Rimozione: .\scripts\installa-servizio.ps1 -Disinstalla
 ```
 
-Dalla rete serve il token: la prima volta apri `http://indirizzo:5185/?token=…`. Il server non fa HTTPS: fuori dalla LAN usa una VPN o un reverse proxy. Impostazioni in `appsettings.json` (sezione `Haedus`: `DataRoot`, `HistoryDirectory`, `AccessToken`, `MaxUploadBytes`), sovrascrivibili con variabili `Haedus__AccessToken=…`. L'indirizzo si imposta con `Urls` (variabile `Urls=http://0.0.0.0:5185`).
+Dalla rete serve il token: la prima volta apri `http://indirizzo:5185/?token=…`. Il server non fa HTTPS: fuori dalla LAN usa una VPN o un reverse proxy. Impostazioni in `appsettings.json` (sezione `Haedus`: `DataRoot`, `HistoryDirectory`, `AccessToken`, `AllowedHosts`, `MaxUploadBytes`), sovrascrivibili con variabili `Haedus__AccessToken=…`. L'indirizzo si imposta con `Urls` (variabile `Urls=http://0.0.0.0:5185`).
+
+Protezione da siti ostili (DNS rebinding e CSRF): senza token il server accetta solo l'header Host `localhost`, `127.0.0.1` e `[::1]` (qualunque porta); per usare un altro nome da questo PC (es. `haedus.lan`) impostalo in `Haedus:AllowedHosts` (variabile `Haedus__AllowedHosts__0=haedus.lan`). Con il token qualunque nome host è accettato (il cookie d'accesso è legato al nome host), a meno che `AllowedHosts` non sia valorizzato: allora vale anche con il token. Le richieste che modificano dati e `/api/export` partite da un altro sito (Origin diverso o `Sec-Fetch-Site` cross-site) vengono rifiutate con 403; script e curl senza questi header continuano a funzionare.
 
 ## Rilascio
 
