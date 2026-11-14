@@ -65,6 +65,9 @@ export function useHaedus(client: BridgeClient) {
   const [jobId, setJobId] = useState<string>();
   const [progress, setProgress] = useState<JobProgress>();
   const [open, setOpen] = useState<OpenResult>();
+  // L'editor ha correzioni non salvate: un risultato appena concluso non deve sostituire quello aperto (issue #82).
+  const editorDirty = useRef(false);
+  const [deferred, setDeferred] = useState<{ id: number; file: string }>();
   const [history, setHistory] = useState<HistoryList>();
   const [downloads, setDownloads] = useState<Record<string, DownloadProgress>>({});
   const [error, setError] = useState<UiError>();
@@ -171,7 +174,8 @@ export function useHaedus(client: BridgeClient) {
       client.on('transcription.progress', (p) => setProgress(p)),
       // Gli eventi transcription.* riguardano solo le trascrizioni singole: la coda arriva con queue.changed.
       client.on('transcription.completed', ({ jobId: finished, result, historyId }) => {
-        setOpen({ result, jobId: finished, historyId });
+        if (editorDirty.current) setDeferred((d) => ({ id: (d?.id ?? 0) + 1, file: result.audioFileName }));
+        else setOpen({ result, jobId: finished, historyId });
         if (historyId) setNotice({ key: 'savedToHistory' });
         setJobId(undefined);
       }),
@@ -372,6 +376,10 @@ export function useHaedus(client: BridgeClient) {
     error,
     notice,
     activity,
+    deferred,
+    reportEditorDirty: (dirty: boolean) => {
+      editorDirty.current = dirty;
+    },
     dismissError: () => setError(undefined),
     dismissNotice: () => setNotice(undefined),
     // Un solo file scelto resta una trascrizione singola; più file formano la coda.
