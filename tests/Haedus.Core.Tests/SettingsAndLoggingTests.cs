@@ -25,6 +25,21 @@ public sealed class SettingsAndLoggingTests : IDisposable
         Assert.Equal(new AppSettings(), recovered);
     }
 
+    [Theory]
+    [InlineData(typeof(UnauthorizedAccessException))]
+    [InlineData(typeof(IOException))]
+    public void Load_returns_defaults_when_the_file_cannot_be_read(Type exceptionType)
+    {
+        var path = Path.Combine(_dir.Path, "settings.json");
+        File.WriteAllText(path, "{}");
+        var store = new SettingsStore(path, _ => throw (Exception)Activator.CreateInstance(exceptionType)!);
+
+        var ex = Record.Exception(store.Load);
+
+        Assert.Null(ex);
+        Assert.Equal(new AppSettings(), store.Load());
+    }
+
     [Fact]
     public void Logs_rotate_and_respect_minimum_level()
     {
