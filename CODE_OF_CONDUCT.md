@@ -36,7 +36,7 @@ Il codice vale in tutti gli spazi del progetto (issue, pull request, discussioni
 
 ## Segnalazioni
 
-Gli episodi di comportamento inaccettabile si possono segnalare ai maintainer scrivendo a **saturn@codexcircle.it**. Tutte le segnalazioni saranno esaminate con tempestività e trattate con riservatezza verso chi segnala.
+Gli episodi di comportamento inaccettabile si possono segnalare ai maintainer in privato ai maintainer di Stellatinus: usa la segnalazione privata di GitHub del repository ([Security → Report a vulnerability](https://github.com/Stellatinus/Haedus/security/advisories/new)) o contatta direttamente uno dei maintainer. Tutte le segnalazioni saranno esaminate con tempestività e trattate con riservatezza verso chi segnala.
 
 ## Provvedimenti
 
