@@ -716,43 +716,53 @@ public sealed partial class BridgeDispatcher : IDisposable
         // I job della coda arrivano alla UI con queue.changed; gli eventi transcription.* restano per quelli singoli.
         var fromQueue = IsQueueJob(job.JobId);
         string? historyId = null;
-        switch (job.Status)
+        try
         {
-            case JobStatus.Completed:
-                try
-                {
-                    historyId = History().Save(job.Result!, UiLanguage(), AudioPathOrNull(job.AudioId)).Id;
-                }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-                {
-                    LogHistorySaveFailed(ex);
-                    // La cartella non vale più come testata: la spunta verde non deve restare su una cartella che non scrive.
-                    if (_settings.Load() is { HistoryDirectoryTestedAt: not null } tested)
-                        _settings.Save(tested with { HistoryDirectoryTestedAt = null });
-                    var code = TryRecover(job.Result!, AudioPathOrNull(job.AudioId)) ? ErrorCodes.HistoryFolderBlocked : ErrorCodes.HistorySaveFailed;
-                    Emit("history.saveFailed", new { job.JobId, Error = new BridgeError(code, "Impossibile salvare nella cronologia.") });
-                }
+            switch (job.Status)
+            {
+                case JobStatus.Completed:
+                    try
+                    {
+                        historyId = History().Save(job.Result!, UiLanguage(), AudioPathOrNull(job.AudioId)).Id;
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                    {
+                        LogHistorySaveFailed(ex);
+                        // La cartella non vale più come testata: la spunta verde non deve restare su una cartella che non scrive.
+                        if (_settings.Load() is { HistoryDirectoryTestedAt: not null } tested)
+                            _settings.Save(tested with { HistoryDirectoryTestedAt = null });
+                        var code = TryRecover(job.Result!, AudioPathOrNull(job.AudioId)) ? ErrorCodes.HistoryFolderBlocked : ErrorCodes.HistorySaveFailed;
+                        Emit("history.saveFailed", new { job.JobId, Error = new BridgeError(code, "Impossibile salvare nella cronologia.") });
+                    }
 
-                if (!fromQueue)
-                    Emit("transcription.completed", new { job.JobId, job.Result, HistoryId = historyId });
-                if (historyId is not null)
-                    Emit("history.changed", null);
-                break;
-            case JobStatus.Cancelled:
-                if (!fromQueue)
-                    Emit("transcription.cancelled", new { job.JobId });
-                break;
-            default:
-                // Un modello trovato danneggiato durante la verifica cambia stato: la scheda Modelli va aggiornata.
-                if (job.Error?.Code == ErrorCodes.ModelHashMismatch)
-                    Emit("models.changed", null);
-                if (!fromQueue)
-                    Emit("transcription.failed", new { job.JobId, Error = JobError(job) });
-                break;
+                    if (!fromQueue)
+                        Emit("transcription.completed", new { job.JobId, job.Result, HistoryId = historyId });
+                    if (historyId is not null)
+                        Emit("history.changed", null);
+                    break;
+                case JobStatus.Cancelled:
+                    if (!fromQueue)
+                        Emit("transcription.cancelled", new { job.JobId });
+                    break;
+                default:
+                    // Un modello trovato danneggiato durante la verifica cambia stato: la scheda Modelli va aggiornata.
+                    if (job.Error?.Code == ErrorCodes.ModelHashMismatch)
+                        Emit("models.changed", null);
+                    if (!fromQueue)
+                        Emit("transcription.failed", new { job.JobId, Error = JobError(job) });
+                    break;
+            }
         }
-
-        // Anche dopo un job singolo: la coda poteva essere in attesa che il core si liberasse.
-        OnQueueJobFinished(job, historyId);
+        catch (Exception ex)
+        {
+            // Qualunque errore (non solo di I/O) non deve lasciare la coda appesa: il job va comunque chiuso qui sotto.
+            LogFinishedHandlerFailed(job.JobId, ex.GetType().Name); // senza messaggio né stack: potrebbero contenere percorsi
+        }
+        finally
+        {
+            // Anche dopo un job singolo: la coda poteva essere in attesa che il core si liberasse.
+            OnQueueJobFinished(job, historyId);
+        }
     }
 
     private static BridgeError JobError(TranscriptionJob job) =>
@@ -796,6 +806,9 @@ public sealed partial class BridgeDispatcher : IDisposable
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Salvataggio nella cronologia non riuscito")]
     private partial void LogHistorySaveFailed(Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Errore non gestito alla fine della trascrizione {JobId}: {ExceptionType}")]
+    private partial void LogFinishedHandlerFailed(string jobId, string exceptionType);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Comando {Command} rifiutato: {Code}")]
     private partial void LogRequestFailed(string command, string code);

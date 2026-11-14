@@ -524,6 +524,42 @@ public sealed class BridgeDispatcherTests : IDisposable
     }
 
     [Fact]
+    public async Task Queue_survives_a_history_save_that_throws_a_non_io_exception()
+    {
+        // Un percorso con un carattere nullo fa lanciare ArgumentException al salvataggio, non IOException.
+        var audio = new AudioLibrary([new WavDecoder()], TimeSpan.FromHours(3));
+        using var transcription = new TranscriptionService(_store, audio, new EchoEngine(), NullLogger<TranscriptionService>.Instance);
+        var paths = _dir.AppPaths();
+        using var dispatcher = new BridgeDispatcher(paths, new SettingsStore(Path.Combine(_dir.Path, "s-non-io.json")), _store, new NoDownloads(),
+            new FakeHardware(TestData.Hardware()), audio, transcription, _shell, new HistoryLocation("cartella\0anomala"), NullLogger<BridgeDispatcher>.Instance);
+
+        async Task<JsonElement> Send(string type, object? payload = null)
+        {
+            var json = JsonSerializer.Serialize(new { v = BridgeProtocol.Version, id = $"q-{++_nextId}", type, payload }, BridgeProtocol.JsonOptions);
+            return Ok(JsonElement.Parse(await dispatcher.HandleAsync(json)));
+        }
+
+        _shell.NextOpen = _dir.File("base-non-io.bin", ModelContent);
+        await Send("models.import");
+        _shell.NextOpenMany.Add(_dir.File("uno-non-io.wav", TestData.Wav(16000, 1, 1)));
+        _shell.NextOpenMany.Add(_dir.File("due-non-io.wav", TestData.Wav(16000, 1, 2)));
+        var batch = await Send("audio.pickMany");
+        var audioIds = batch.GetProperty("picked").EnumerateArray().Select(p => p.GetProperty("audioId").GetString()).ToArray();
+        await Send("queue.add", new { audioIds, failed = Array.Empty<object>() });
+
+        await Send("queue.start", new { modelId = "base", language = "it" });
+        await _shell.WaitForEventAsync("queue.finished");
+
+        // Nessun file resta «Working» o in coda, il job è liberato e la coda può ripartire.
+        var state = await Send("queue.get");
+        Assert.False(state.GetProperty("running").GetBoolean());
+        Assert.True(!state.TryGetProperty("jobId", out var jobId) || jobId.ValueKind == JsonValueKind.Null);
+        Assert.All(state.GetProperty("items").EnumerateArray(), i => Assert.NotEqual("working", i.GetProperty("status").GetString()));
+        Assert.All(state.GetProperty("items").EnumerateArray(), i => Assert.NotEqual("queued", i.GetProperty("status").GetString()));
+        Assert.Null(transcription.Current);
+    }
+
+    [Fact]
     public async Task Queue_start_needs_a_known_model()
     {
         Assert.Equal(ErrorCodes.ModelNotInstalled, ErrorCode(await Call("queue.start")));

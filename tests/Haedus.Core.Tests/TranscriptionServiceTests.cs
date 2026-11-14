@@ -369,6 +369,36 @@ public sealed class TranscriptionServiceTests : IDisposable
     }
 
     /// <summary>Un secondo di parlato per volta, annullabile: come un motore vero che si ferma quando glielo si chiede.</summary>
+    [Fact]
+    public async Task A_throwing_finished_subscriber_does_not_block_the_others_or_the_waiter()
+    {
+        await InstallModelAsync();
+        _service.Finished += _ => throw new InvalidOperationException("sottoscrittore difettoso");
+        var second = new TaskCompletionSource<TranscriptionJob>();
+        _service.Finished += j => second.TrySetResult(j);
+
+        var result = await _service.RunToCompletionAsync(RegisterAudio(1), "base", new TranscriptionOptions("it"), CancellationToken.None)
+            .WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.NotEmpty(result.Segments);
+        Assert.Equal(JobStatus.Completed, (await second.Task.WaitAsync(TimeSpan.FromSeconds(10))).Status);
+    }
+
+    [Fact]
+    public async Task A_throwing_progress_subscriber_does_not_block_the_others_or_fail_the_job()
+    {
+        await InstallModelAsync();
+        _service.Progress += _ => throw new InvalidOperationException("sottoscrittore difettoso");
+        var seen = new List<JobProgress>();
+        _service.Progress += seen.Add;
+
+        var result = await _service.RunToCompletionAsync(RegisterAudio(1), "base", new TranscriptionOptions("it"), CancellationToken.None)
+            .WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.NotEmpty(result.Segments);
+        Assert.Equal(JobStatus.Completed, seen[^1].Status);
+    }
+
     private sealed class PausableEngine : ITranscriptionEngine
     {
         private int _emitted;
