@@ -17,6 +17,15 @@ public sealed class ServerOptions
     /// </summary>
     public string? AccessToken { get; set; }
 
+    /// <summary>
+    /// Nomi host (senza porta, qualunque porta) con cui si può raggiungere il server, oltre a localhost, 127.0.0.1 e [::1].
+    /// Difende dal DNS rebinding: un sito ostile il cui nome punta a 127.0.0.1 manda un header Host diverso e viene rifiutato.
+    /// Senza token è obbligatorio per usare un nome diverso da localhost (es. <c>Haedus__AllowedHosts__0=haedus.lan</c>).
+    /// Con il token vuoto = qualunque host (il cookie d'accesso è legato al nome host, quindi un sito ostile non lo ha);
+    /// se valorizzato, il controllo vale anche con il token.
+    /// </summary>
+    public string[] AllowedHosts { get; set; } = [];
+
     /// <summary>Dimensione massima di un caricamento (tutti i file insieme).</summary>
     public long MaxUploadBytes { get; set; } = 4L * 1024 * 1024 * 1024;
 }

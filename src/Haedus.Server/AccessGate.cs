@@ -25,6 +25,17 @@ public sealed partial class AccessGate(RequestDelegate next, IOptions<ServerOpti
             return;
         }
 
+        // Anti DNS rebinding: senza token l'host deve essere noto. Con il token il cookie (legato all'host) basta,
+        // salvo AllowedHosts esplicito.
+        if ((string.IsNullOrEmpty(token) || options.Value.AllowedHosts.Length > 0)
+            && !HostAllowed(context.Request.Host, options.Value.AllowedHosts))
+        {
+            LogRejected(context.Connection.RemoteIpAddress?.ToString() ?? "?", "host non ammesso: " + context.Request.Host.Host);
+            await Deny(context, StatusCodes.Status403Forbidden,
+                "Host non ammesso: aggiungilo a Haedus:AllowedHosts nella configurazione del server.").ConfigureAwait(false);
+            return;
+        }
+
         if (string.IsNullOrEmpty(token))
         {
             if (!IsLoopback(context.Connection.RemoteIpAddress))
@@ -57,6 +68,13 @@ public sealed partial class AccessGate(RequestDelegate next, IOptions<ServerOpti
             return;
         }
 
+        if (IsCrossSiteMutation(context.Request))
+        {
+            LogRejected(context.Connection.RemoteIpAddress?.ToString() ?? "?", "richiesta cross-site");
+            await Deny(context, StatusCodes.Status403Forbidden, "Richiesta cross-site rifiutata.").ConfigureAwait(false);
+            return;
+        }
+
         if (context.WebSockets.IsWebSocketRequest && !SameOrigin(context.Request))
         {
             LogRejected(context.Connection.RemoteIpAddress?.ToString() ?? "?", "origine diversa");
@@ -65,6 +83,30 @@ public sealed partial class AccessGate(RequestDelegate next, IOptions<ServerOpti
         }
 
         await next(context).ConfigureAwait(false);
+    }
+
+    private static readonly string[] LoopbackHosts = ["localhost", "127.0.0.1", "[::1]"];
+
+    /// <summary>Host (qualunque porta) tra localhost/127.0.0.1/[::1] e gli host configurati.</summary>
+    public static bool HostAllowed(HostString host, IEnumerable<string> allowed) =>
+        LoopbackHosts.Concat(allowed).Any(a => string.Equals(a.Trim(), host.Host, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Richieste che cambiano stato (non GET/HEAD/OPTIONS) e <c>/api/export</c> (dati sensibili): se il browser dichiara
+    /// <c>Sec-Fetch-Site</c> deve essere same-origin o none, e se manda Origin deve essere lo stesso host:porta.
+    /// Senza nessuno dei due header (curl, script) la richiesta non viene da una pagina web e passa.
+    /// </summary>
+    public static bool IsCrossSiteMutation(HttpRequest request)
+    {
+        var method = request.Method;
+        var sensitive = !(HttpMethods.IsGet(method) || HttpMethods.IsHead(method) || HttpMethods.IsOptions(method))
+                        || request.Path.StartsWithSegments("/api/export", StringComparison.OrdinalIgnoreCase);
+        if (!sensitive)
+            return false;
+        var site = request.Headers["Sec-Fetch-Site"].ToString();
+        if (site.Length > 0 && site is not ("same-origin" or "none"))
+            return true;
+        return request.Headers.Origin.ToString().Length > 0 && !SameOrigin(request);
     }
 
     public static bool IsLoopback(IPAddress? address) => address is not null && IPAddress.IsLoopback(address);
