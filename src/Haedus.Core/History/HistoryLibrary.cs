@@ -41,7 +41,7 @@ public sealed class HistoryLibrary
     {
         lock (Gate)
         {
-            var doc = Load();
+            var doc = Load().Doc;
             return new HistoryLibrarySnapshot(
                 new Dictionary<string, string>(doc.Titles, StringComparer.Ordinal),
                 doc.Collections.Select(ToCollection).ToList());
@@ -127,50 +127,94 @@ public sealed class HistoryLibrary
                 return;
         }
 
-        Update(doc =>
+        try
         {
-            doc.Titles.Remove(entryId);
-            foreach (var c in doc.Collections)
-                c.EntryIds.Remove(entryId);
-        });
+            Update(doc =>
+            {
+                doc.Titles.Remove(entryId);
+                foreach (var c in doc.Collections)
+                    c.EntryIds.Remove(entryId);
+            });
+        }
+        catch (HaedusException ex) when (ex.Code == ErrorCodes.Internal)
+        {
+            // Libreria non riscrivibile (bloccata o di versione futura): niente da dimenticare, la trascrizione è già eliminata.
+        }
     }
 
     private void Update(Action<LibraryDocument> change)
     {
         lock (Gate)
         {
-            var doc = Load();
-            change(doc);
-            Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-            var temp = _path + ".tmp";
-            File.WriteAllText(temp, JsonSerializer.Serialize(doc, Json), new UTF8Encoding(false));
-            File.Move(temp, _path, overwrite: true);
+            var (doc, state) = Load();
+            switch (state)
+            {
+                case LoadState.Unreadable:
+                    throw new HaedusException(ErrorCodes.Internal,
+                        "library.json non è leggibile in questo momento (file bloccato o senza permessi): modifica annullata per non perdere nomi e raccolte.");
+                case LoadState.Future:
+                    throw new HaedusException(ErrorCodes.Internal,
+                        "library.json è stato scritto da una versione più recente di Haedus: modifica annullata per non perdere nomi e raccolte.");
+            }
+
+            try
+            {
+                if (state == LoadState.Corrupt)
+                {
+                    // Una sola copia di sicurezza: un .bak già presente non si sovrascrive.
+                    var backup = _path + ".bak";
+                    if (!File.Exists(backup))
+                        File.Copy(_path, backup);
+                }
+
+                change(doc);
+                Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
+                var temp = _path + ".tmp";
+                File.WriteAllText(temp, JsonSerializer.Serialize(doc, Json), new UTF8Encoding(false));
+                File.Move(temp, _path, overwrite: true);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                throw new HaedusException(ErrorCodes.Internal, "Impossibile salvare library.json: " + ex.Message);
+            }
         }
     }
 
-    private LibraryDocument Load()
+    private enum LoadState { Missing, Ok, Corrupt, Future, Unreadable }
+
+    /// <summary>Distingue «assente» da «illeggibile», «corrotto» e «di versione futura»: solo i primi due si possono riscrivere senza perdere dati.</summary>
+    private (LibraryDocument Doc, LoadState State) Load()
     {
-        if (File.Exists(_path))
+        var empty = new LibraryDocument(Format, FormatVersion, new Dictionary<string, string>(StringComparer.Ordinal), []);
+        string text;
+        try
         {
-            try
-            {
-                var doc = JsonSerializer.Deserialize<LibraryDocument>(File.ReadAllText(_path), Json);
-                if (doc is { Version: <= FormatVersion } && (doc.Format == Format || doc.Format == LegacyData.OldLibraryFormat))
-                {
-                    return doc with
-                    {
-                        Titles = new Dictionary<string, string>(doc.Titles ?? new Dictionary<string, string>(), StringComparer.Ordinal),
-                        Collections = (doc.Collections ?? []).Select(c => c with { EntryIds = [.. c.EntryIds ?? []] }).ToList(),
-                    };
-                }
-            }
-            catch (Exception ex) when (ex is JsonException or IOException or NotSupportedException)
-            {
-                // File illeggibile: si riparte vuoti, le trascrizioni non sono toccate.
-            }
+            if (!File.Exists(_path))
+                return (empty, LoadState.Missing);
+            text = File.ReadAllText(_path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return (empty, LoadState.Unreadable);
         }
 
-        return new LibraryDocument(Format, FormatVersion, new Dictionary<string, string>(StringComparer.Ordinal), []);
+        try
+        {
+            var doc = JsonSerializer.Deserialize<LibraryDocument>(text, Json);
+            if (doc is null || (doc.Format != Format && doc.Format != LegacyData.OldLibraryFormat))
+                return (empty, LoadState.Corrupt);
+            if (doc.Version > FormatVersion)
+                return (empty, LoadState.Future);
+            return (doc with
+            {
+                Titles = new Dictionary<string, string>(doc.Titles ?? new Dictionary<string, string>(), StringComparer.Ordinal),
+                Collections = (doc.Collections ?? []).Select(c => c with { EntryIds = [.. c.EntryIds ?? []] }).ToList(),
+            }, LoadState.Ok);
+        }
+        catch (Exception ex) when (ex is JsonException or NotSupportedException or ArgumentException)
+        {
+            return (empty, LoadState.Corrupt);
+        }
     }
 
     private static CollectionDocument Find(LibraryDocument doc, string id) =>

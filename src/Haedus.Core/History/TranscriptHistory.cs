@@ -85,8 +85,15 @@ public sealed class TranscriptHistory
         foreach (var file in System.IO.Directory.EnumerateFiles(Directory, "*.json"))
         {
             var id = Path.GetFileNameWithoutExtension(file);
-            if (TryRead(file) is { } result)
-                entries.Add(ToEntry(id, result));
+            // Un file illeggibile o incompleto non deve rompere l'intero elenco.
+            try
+            {
+                if (TryRead(file) is { } result)
+                    entries.Add(ToEntry(id, result));
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+            }
         }
 
         return entries.OrderByDescending(e => e.CompletedAt).ThenByDescending(e => e.Id, StringComparer.Ordinal).ToList();
@@ -106,8 +113,9 @@ public sealed class TranscriptHistory
     public void Delete(string id)
     {
         var json = PathFor(id, ".json");
-        if (!File.Exists(json))
-            throw new HaedusException(ErrorCodes.HistoryNotFound, "Trascrizione non trovata nella cronologia.");
+        // Si cancella solo un file che è davvero una trascrizione valida.
+        if (Read(json) is null)
+            throw NotFound();
         File.Delete(json);
         var txt = PathFor(id, ".txt");
         if (File.Exists(txt))
@@ -153,6 +161,10 @@ public sealed class TranscriptHistory
             throw new HaedusException(ErrorCodes.InvalidRequest, "Identificativo di cronologia non valido.");
         }
 
+        // library.json vive nella stessa cartella: non è una trascrizione.
+        if (string.Equals(id, Path.GetFileNameWithoutExtension(HistoryLibrary.FileName), StringComparison.OrdinalIgnoreCase))
+            throw new HaedusException(ErrorCodes.InvalidRequest, "Identificativo di cronologia non valido.");
+
         return Path.Combine(Directory, id + extension);
     }
 
@@ -165,13 +177,21 @@ public sealed class TranscriptHistory
         try
         {
             var document = JsonSerializer.Deserialize<HistoryDocument>(File.ReadAllText(path), Json);
-            return document is { Version: <= FormatVersion, Result: not null } && (document.Format == Format || document.Format == LegacyData.OldTranscriptFormat) ? document : null;
+            return document is { Version: <= FormatVersion, Result: not null } && (document.Format == Format || document.Format == LegacyData.OldTranscriptFormat) && IsComplete(document.Result)
+                ? document
+                : null;
         }
-        catch (Exception ex) when (ex is JsonException or IOException or NotSupportedException)
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             return null;
         }
     }
+
+    /// <summary>Un JSON incompleto o tagliato può lasciare nulle le proprietà non nullable: si scarta invece di lanciare più tardi.</summary>
+    private static bool IsComplete(TranscriptionResult r) =>
+        r.AudioFileName is not null &&
+        r.Model is { ModelId: not null, DisplayName: not null, File: not null, Sha256: not null, Runtime: not null } &&
+        r.Segments is not null && r.Segments.All(s => s is { Text: not null });
 
     private static HistoryEntry ToEntry(string id, TranscriptionResult result)
     {
