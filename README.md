@@ -54,7 +54,7 @@ dotnet build src/Haedus.App -c Debug
 |---|---|---|
 | `ci.yml` | push su `main`, ogni PR | test .NET (Linux), UI (typecheck, test, build app/server/preview), build e test della soluzione su Windows con il workload MAUI, immagine Docker con prova di porta, token e `/healthz` |
 | `release.yml` | a mano (Actions → Release → Run workflow, da `main`) | costruisce l'installer Velopack, i checksum e la release GitHub con le note di `docs/releases/<versione>.md`; poi verifica il feed di aggiornamento e pubblica l'immagine su GHCR. Con «dry_run» (predefinito) non pubblica nulla e lascia l'installer come artefatto |
-| `codeql.yml` | push su `main`, PR, ogni lunedì | analisi statica C# e TypeScript |
+| CodeQL (impostazione predefinita di GitHub) | push su `main`, PR | analisi statica C# e TypeScript, gestita da Settings → Code security |
 | `dependency-audit.yml` | ogni lunedì, a mano | vulnerabilità note nelle dipendenze NuGet e npm |
 | Dependabot | ogni settimana | aggiornamenti di NuGet, npm, GitHub Actions e immagini Docker |
 
