@@ -20,7 +20,7 @@ COPY --from=ui /src/src/Haedus.Server/wwwroot src/Haedus.Server/wwwroot
 RUN dotnet publish src/Haedus.Server/Haedus.Server.csproj -c Release -r linux-x64 --self-contained false -o /app
 
 # 3) Immagine finale: runtime ASP.NET + ffmpeg (decodifica audio, ADR-0007)
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:11.0 AS final
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ffmpeg libgomp1 curl \
     && rm -rf /var/lib/apt/lists/*
