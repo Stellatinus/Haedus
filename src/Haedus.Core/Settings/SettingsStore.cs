@@ -66,7 +66,17 @@ public sealed class SettingsStore
     private readonly Lock _gate = new();
     private AppSettings? _cached;
 
-    public SettingsStore(string path) => _path = path;
+    private readonly Func<string, string> _readAllText;
+
+    public SettingsStore(string path) : this(path, File.ReadAllText)
+    {
+    }
+
+    internal SettingsStore(string path, Func<string, string> readAllText)
+    {
+        _path = path;
+        _readAllText = readAllText;
+    }
 
     public AppSettings Load()
     {
@@ -77,12 +87,12 @@ public sealed class SettingsStore
             try
             {
                 _cached = File.Exists(_path)
-                    ? JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(_path), Options) ?? new AppSettings()
+                    ? JsonSerializer.Deserialize<AppSettings>(_readAllText(_path), Options) ?? new AppSettings()
                     : new AppSettings();
             }
-            catch (JsonException)
+            catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
             {
-                // File illeggibile: si riparte dai default senza perdere l'avvio dell'app.
+                // File illeggibile o bloccato: si riparte dai default senza perdere l'avvio dell'app.
                 _cached = new AppSettings();
             }
 
