@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import type { ExportFormat, TranscriptionResult } from '../bridge/protocol';
 import { Icon } from '../components/Icon';
 import { useI18n } from '../i18n/i18n';
@@ -19,6 +19,8 @@ interface Props {
   /** Indirizzo dell'audio originale; senza (o se non si carica) il lettore muove solo il cursore sulla timeline. */
   loadAudio?: () => Promise<string | undefined>;
   onDirtyChange: (dirty: boolean) => void;
+  /** Il genitore vi trova il salvataggio dell'editor (per la guardia di navigazione); true se non resta nulla da salvare. */
+  saveHandle?: MutableRefObject<(() => Promise<boolean>) | null>;
   onCopied: () => void;
 }
 
@@ -27,7 +29,7 @@ interface Props {
  * Il lettore riproduce l'audio originale quando c'è (history.audio) e il cursore della timeline ne segue il tempo;
  * altrimenti muove solo il cursore con un orologio proprio.
  */
-export function Editor({ result, title, onRename, onExport, onSave, loadAudio, onDirtyChange, onCopied }: Props) {
+export function Editor({ result, title, onRename, onExport, onSave, loadAudio, onDirtyChange, saveHandle, onCopied }: Props) {
   const { t } = useI18n();
   const editor = useEditorState(result);
   const { segments, speakers } = editor;
@@ -66,6 +68,8 @@ export function Editor({ result, title, onRename, onExport, onSave, loadAudio, o
   const hasAudio = audioUrl !== undefined && !audioLost;
 
   useEffect(() => onDirtyChange(editor.dirty), [editor.dirty, onDirtyChange]);
+  // Smontando l'editor (cambio scheda o file) non resta nulla da salvare: il badge «Modificato» si spegne.
+  useEffect(() => () => onDirtyChange(false), [onDirtyChange]);
 
   const place = useCallback(() => {
     if (headRef.current) headRef.current.style.left = `${time.current * ppsRef.current}px`;
@@ -167,19 +171,28 @@ export function Editor({ result, title, onRename, onExport, onSave, loadAudio, o
   };
 
   const [saving, setSaving] = useState(false);
-  const save = async () => {
-    if (!onSave || saving || !editor.dirty) return;
+  const save = async (): Promise<boolean> => {
+    if (!editor.dirty) return true;
+    if (!onSave || saving) return false;
     const snapshot = editor.snapshot;
     setSaving(true);
     try {
       const ok = await onSave(snapshot.segments.filter((g) => g.text.trim()).map((g) => ({ start: g.start, end: g.end, text: g.text })));
       if (ok) editor.markSaved(snapshot);
+      return ok;
     } finally {
       setSaving(false);
     }
   };
   const saveRef = useRef(save);
   saveRef.current = save;
+  useEffect(() => {
+    if (!saveHandle) return;
+    saveHandle.current = () => saveRef.current();
+    return () => {
+      saveHandle.current = null;
+    };
+  }, [saveHandle]);
 
   // Ctrl+S (o Cmd+S) salva anche mentre si scrive in un segmento.
   useEffect(() => {

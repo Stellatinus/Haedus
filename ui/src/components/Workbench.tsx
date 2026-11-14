@@ -1,3 +1,4 @@
+import type { MutableRefObject } from 'react';
 import { useI18n } from '../i18n/i18n';
 import type { HaedusState, QueueItem } from '../state/useHaedus';
 import { Editor } from '../editor/Editor';
@@ -8,11 +9,12 @@ interface Props {
   app: HaedusState;
   selection: Selection;
   onDirtyChange: (dirty: boolean) => void;
+  saveHandle?: MutableRefObject<(() => Promise<boolean>) | null>;
   onCopied: () => void;
 }
 
 /** Cosa mostrare per il file scelto nell'elenco: il testo da correggere, o lo stato se non è ancora pronto. */
-export function Workbench({ app, selection, onDirtyChange, onCopied }: Props) {
+export function Workbench({ app, selection, onDirtyChange, saveHandle, onCopied }: Props) {
   const { t, formatDuration, describeError } = useI18n();
   const open = app.open;
 
@@ -67,6 +69,7 @@ export function Workbench({ app, selection, onDirtyChange, onCopied }: Props) {
       loadAudio={historyId ? () => app.audioFor(historyId) : undefined}
       onSave={historyId ? (segments) => app.saveEdits(historyId, segments) : undefined}
       onDirtyChange={onDirtyChange}
+      saveHandle={saveHandle}
       onCopied={onCopied}
     />
     </div>
