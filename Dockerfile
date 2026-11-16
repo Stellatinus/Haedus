@@ -3,7 +3,7 @@
 # Uso:    docker compose up -d   (vedi docker-compose.yml)
 
 # 1) UI React per la versione server
-FROM node:22-bookworm-slim AS ui
+FROM node:26-bookworm-slim AS ui
 WORKDIR /src/ui
 COPY ui/package.json ui/package-lock.json ./
 RUN npm ci
