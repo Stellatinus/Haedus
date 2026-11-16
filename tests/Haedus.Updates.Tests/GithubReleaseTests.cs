@@ -19,7 +19,9 @@ public sealed class GithubReleaseTests : IDisposable
 
     private VelopackUpdateService Service(string installedVersion) =>
         new(ProjectInfo.RepositoryUrl, NullLogger<VelopackUpdateService>.Instance, source: null,
-            new TestVelopackLocator("Haedus", installedVersion, _packages, NullVelopackLogger.Instance));
+            new TestVelopackLocator("Haedus", installedVersion, _packages, NullVelopackLogger.Instance),
+            // L'app installata è Windows (canale «win»); il test gira anche su Linux, dove il canale predefinito sarebbe «linux».
+            channel: "win");
 
     [Fact]
     public async Task The_latest_github_release_is_offered_to_an_older_install_and_not_to_an_up_to_date_one()
