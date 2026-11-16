@@ -1,9 +1,12 @@
 version: 2
 
-# Regola del progetto: si aggiorna solo a versioni LTS.
-#  - .NET: LTS sono le versioni pari (8, 10, 12...); 9, 11, 13 sono STS e si ignorano.
-#  - Node: LTS sono le versioni pari (22, 24, 26...); 23, 25, 27 sono «Current» e si ignorano.
-# Per passare a una nuova LTS (es. .NET 12) si cambia a mano la versione e si toglie l'ignore.
+# Regola del progetto: si usano solo versioni LTS.
+#  - Node (immagine Docker): LTS sono le versioni pari. Quelle dispari si ignorano e il passaggio
+#    22 -> 24 -> 26... arriva da solo come PR, che la CI (build Docker e test della UI) valida.
+#  - .NET: il salto di versione (10 -> 12 -> 14) cambia anche il TargetFramework e il workload MAUI,
+#    cosa che Dependabot non sa fare. Gli aggiornamenti major dei pacchetti e delle immagini legati
+#    a .NET sono quindi ignorati, ma patch e minor continuano ad arrivare. Il salto si fa una volta,
+#    direttamente all'ultima LTS (anche 10 -> 14), quando serve.
 updates:
   - package-ecosystem: nuget
     directory: "/"
@@ -14,11 +17,10 @@ updates:
       microsoft:
         patterns: ["Microsoft.*", "System.*"]
     ignore:
-      # Pacchetti legati alla versione di .NET: niente versioni STS (11, 13).
       - dependency-name: "Microsoft.Extensions.*"
-        versions: ["11.x", "13.x"]
+        update-types: ["version-update:semver-major"]
       - dependency-name: "Microsoft.Maui.*"
-        versions: ["11.x", "13.x"]
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: "/ui"
     schedule:
@@ -39,9 +41,9 @@ updates:
     ignore:
       # Node: niente versioni «Current» (dispari).
       - dependency-name: "node"
-        versions: ["23.x", "25.x", "27.x"]
-      # Immagini .NET: niente versioni STS (11, 13).
+        versions: ["23.x", "25.x", "27.x", "29.x", "31.x", "33.x", "35.x", "37.x", "39.x", "41.x", "43.x", "45.x", "47.x", "49.x", "51.x", "53.x", "55.x", "57.x", "59.x", "61.x", "63.x", "65.x", "67.x", "69.x", "71.x", "73.x", "75.x", "77.x", "79.x", "81.x", "83.x", "85.x", "87.x", "89.x", "91.x", "93.x", "95.x", "97.x", "99.x"]
+      # Immagini .NET: il salto di versione si fa a mano insieme al TargetFramework.
       - dependency-name: "dotnet/sdk"
-        versions: ["11.x", "13.x"]
+        update-types: ["version-update:semver-major"]
       - dependency-name: "dotnet/aspnet"
-        versions: ["11.x", "13.x"]
+        update-types: ["version-update:semver-major"]
