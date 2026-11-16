@@ -106,6 +106,9 @@ jobs:
           vpk download github --repoUrl "https://github.com/$env:GITHUB_REPOSITORY" --token $env:GH_TOKEN --outputDir installer 2>&1 | Write-Host
           if ($LASTEXITCODE -ne 0) { Write-Host '::warning::Nessuna release precedente (o download non riuscito): pacchetto completo senza delta.' }
           $ErrorActionPreference = 'Stop'
+          # Il repository contiene anche le release di CodexVTT (altro packId): i loro pacchetti non devono finire
+          # nel feed né tra gli asset della nuova release, né fare da base per i delta.
+          Get-ChildItem installer -File -Filter 'CodexVTT-*' -ErrorAction SilentlyContinue | Remove-Item -Force
           vpk pack --packId Haedus --packVersion $version --packDir publish --mainExe Haedus.App.exe --packTitle Haedus --releaseNotes "docs/releases/$version.md" --outputDir installer
           if ($LASTEXITCODE -ne 0) { throw 'vpk pack fallito' }
           # Installer non firmato (ADR-0005): si pubblicano i checksum per la verifica manuale. Terminazioni LF.

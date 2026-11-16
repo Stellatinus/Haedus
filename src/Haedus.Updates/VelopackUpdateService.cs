@@ -23,7 +23,7 @@ public sealed partial class VelopackUpdateService : IUpdateService
     private UpdateInfo? _pending;
     private UpdateStatus _current;
 
-    public VelopackUpdateService(string repositoryUrl, ILogger<VelopackUpdateService> logger, IUpdateSource? source = null, Velopack.Locators.IVelopackLocator? locator = null)
+    public VelopackUpdateService(string repositoryUrl, ILogger<VelopackUpdateService> logger, IUpdateSource? source = null, Velopack.Locators.IVelopackLocator? locator = null, string? channel = null)
     {
         _logger = logger;
         _releasesUrl = repositoryUrl.TrimEnd('/') + "/releases";
@@ -37,7 +37,8 @@ public sealed partial class VelopackUpdateService : IUpdateService
             : Directory.Exists(overrideSource) ? new SimpleFileSource(new DirectoryInfo(overrideSource)) : new SimpleWebSource(overrideSource);
         try
         {
-            _manager = new UpdateManager(source, locator: locator);
+            // Il canale predefinito segue il sistema operativo (win su Windows); si forza solo nei test, che girano anche su Linux.
+            _manager = new UpdateManager(source, new UpdateOptions { ExplicitChannel = channel }, locator);
         }
         catch (InvalidOperationException)
         {
