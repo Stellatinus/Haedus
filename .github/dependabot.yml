@@ -1,4 +1,9 @@
 version: 2
+
+# Regola del progetto: si aggiorna solo a versioni LTS.
+#  - .NET: LTS sono le versioni pari (8, 10, 12...); 9, 11, 13 sono STS e si ignorano.
+#  - Node: LTS sono le versioni pari (22, 24, 26...); 23, 25, 27 sono «Current» e si ignorano.
+# Per passare a una nuova LTS (es. .NET 12) si cambia a mano la versione e si toglie l'ignore.
 updates:
   - package-ecosystem: nuget
     directory: "/"
@@ -8,11 +13,21 @@ updates:
     groups:
       microsoft:
         patterns: ["Microsoft.*", "System.*"]
+    ignore:
+      # Pacchetti legati alla versione di .NET: niente versioni STS (11, 13).
+      - dependency-name: "Microsoft.Extensions.*"
+        versions: ["11.x", "13.x"]
+      - dependency-name: "Microsoft.Maui.*"
+        versions: ["11.x", "13.x"]
   - package-ecosystem: npm
     directory: "/ui"
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    groups:
+      # react e react-dom devono salire insieme, altrimenti i test falliscono.
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
@@ -21,3 +36,12 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    ignore:
+      # Node: niente versioni «Current» (dispari).
+      - dependency-name: "node"
+        versions: ["23.x", "25.x", "27.x"]
+      # Immagini .NET: niente versioni STS (11, 13).
+      - dependency-name: "dotnet/sdk"
+        versions: ["11.x", "13.x"]
+      - dependency-name: "dotnet/aspnet"
+        versions: ["11.x", "13.x"]
