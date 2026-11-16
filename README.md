@@ -48,7 +48,19 @@ dotnet workload install maui-windows
 dotnet build src/Haedus.App -c Debug
 ```
 
-Il repository **non usa GitHub Actions**: i controlli si eseguono dal PC con un solo comando.
+## Integrazione continua e rilascio (GitHub Actions)
+
+| Workflow | Quando | Cosa fa |
+|---|---|---|
+| `ci.yml` | push su `main`, ogni PR | test .NET (Linux), UI (typecheck, test, build app/server/preview), build e test della soluzione su Windows con il workload MAUI, immagine Docker con prova di porta, token e `/healthz` |
+| `release.yml` | a mano (Actions → Release → Run workflow, da `main`) | costruisce l'installer Velopack, i checksum e la release GitHub con le note di `docs/releases/<versione>.md`; poi verifica il feed di aggiornamento e pubblica l'immagine su GHCR. Con «dry_run» (predefinito) non pubblica nulla e lascia l'installer come artefatto |
+| CodeQL (impostazione predefinita di GitHub) | push su `main`, PR | analisi statica C# e TypeScript, gestita da Settings → Code security |
+| `dependency-audit.yml` | ogni lunedì, a mano | vulnerabilità note nelle dipendenze NuGet e npm |
+| Dependabot | ogni settimana | aggiornamenti di NuGet, npm, GitHub Actions e immagini Docker |
+
+Per rilasciare: alza `<Version>` in `Directory.Build.props` e `version` in `ui/package.json`, scrivi `docs/releases/<versione>.md`, mergia su `main` e lancia il workflow **Release**.
+
+Gli stessi controlli si possono eseguire anche dal PC con un solo comando:
 
 ```powershell
 .\scripts\test-locale.ps1                  # .NET, UI e build dell'app
@@ -80,7 +92,9 @@ dotnet run --project src/Haedus.Server        # http://127.0.0.1:5185, solo da q
 # Rimozione: .\scripts\installa-servizio.ps1 -Disinstalla
 ```
 
-Dalla rete serve il token: la prima volta apri `http://indirizzo:5185/?token=…`. Il server non fa HTTPS: fuori dalla LAN usa una VPN o un reverse proxy. Impostazioni in `appsettings.json` (sezione `Haedus`: `DataRoot`, `HistoryDirectory`, `AccessToken`, `MaxUploadBytes`), sovrascrivibili con variabili `Haedus__AccessToken=…`. L'indirizzo si imposta con `Urls` (variabile `Urls=http://0.0.0.0:5185`).
+Dalla rete serve il token: la prima volta apri `http://indirizzo:5185/?token=…`. Il server non fa HTTPS: fuori dalla LAN usa una VPN o un reverse proxy. Impostazioni in `appsettings.json` (sezione `Haedus`: `DataRoot`, `HistoryDirectory`, `AccessToken`, `AllowedHosts`, `MaxUploadBytes`), sovrascrivibili con variabili `Haedus__AccessToken=…`. L'indirizzo si imposta con `Urls` (variabile `Urls=http://0.0.0.0:5185`).
+
+Protezione da siti ostili (DNS rebinding e CSRF): senza token il server accetta solo l'header Host `localhost`, `127.0.0.1` e `[::1]` (qualunque porta); per usare un altro nome da questo PC (es. `haedus.lan`) impostalo in `Haedus:AllowedHosts` (variabile `Haedus__AllowedHosts__0=haedus.lan`). Con il token qualunque nome host è accettato (il cookie d'accesso è legato al nome host), a meno che `AllowedHosts` non sia valorizzato: allora vale anche con il token. Le richieste che modificano dati e `/api/export` partite da un altro sito (Origin diverso o `Sec-Fetch-Site` cross-site) vengono rifiutate con 403; script e curl senza questi header continuano a funzionare.
 
 ## Rilascio
 

@@ -35,5 +35,7 @@ export default defineConfig(({ mode }) => ({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // axe-core impiega ~4 s in locale: sui runner di CI (2 vCPU) il limite predefinito di 5 s non basta.
+    testTimeout: 30_000,
   },
 }));

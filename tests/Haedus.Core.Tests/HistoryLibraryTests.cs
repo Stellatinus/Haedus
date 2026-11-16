@@ -80,4 +80,70 @@ public sealed class HistoryLibraryTests : IDisposable
         Assert.Throws<HaedusException>(() => library.DeleteCollection("col-assente"));
         Assert.Throws<HaedusException>(() => library.SetCollection("a", "col-assente"));
     }
+
+    private string LibraryPath => Path.Combine(_dir.Path, HistoryLibrary.FileName);
+
+    [Fact]
+    public void A_future_version_is_never_overwritten()
+    {
+        var future = "{\"format\":\"haedus-library\",\"version\":2,\"titles\":{\"a\":\"Nuovo\"},\"collections\":[]}";
+        File.WriteAllText(LibraryPath, future);
+        var library = new HistoryLibrary(_dir.Path);
+
+        Assert.Throws<HaedusException>(() => library.SetTitle("b", "X"));
+        Assert.Throws<HaedusException>(() => library.SaveCollection(null, "Storia", "green"));
+
+        Assert.Equal(future, File.ReadAllText(LibraryPath));
+        Assert.False(File.Exists(LibraryPath + ".bak"));
+        Assert.Empty(library.Read().Titles);
+        library.Forget("a");
+        Assert.Equal(future, File.ReadAllText(LibraryPath));
+    }
+
+    [Fact]
+    public void A_corrupt_file_is_backed_up_once_before_being_replaced()
+    {
+        File.WriteAllText(LibraryPath, "{ non json");
+        var library = new HistoryLibrary(_dir.Path);
+        Assert.Empty(library.Read().Titles);
+
+        library.SetTitle("a", "Uno");
+
+        Assert.Equal("{ non json", File.ReadAllText(LibraryPath + ".bak"));
+        Assert.Equal("Uno", library.Read().Titles["a"]);
+
+        // Ora il file è valido: un secondo aggiornamento non tocca il .bak.
+        library.SetTitle("b", "Due");
+        Assert.Equal("{ non json", File.ReadAllText(LibraryPath + ".bak"));
+    }
+
+    [Fact]
+    public void An_existing_backup_is_not_overwritten()
+    {
+        File.WriteAllText(LibraryPath + ".bak", "vecchio backup");
+        File.WriteAllText(LibraryPath, "[1,2");
+
+        new HistoryLibrary(_dir.Path).SetTitle("a", "Uno");
+
+        Assert.Equal("vecchio backup", File.ReadAllText(LibraryPath + ".bak"));
+    }
+
+    [Fact]
+    public void An_unreadable_library_path_refuses_writes_but_reads_stay_empty()
+    {
+        // Una cartella al posto di library.json: la lettura fallisce con un errore di I/O o di permessi.
+        Directory.CreateDirectory(LibraryPath);
+        var library = new HistoryLibrary(_dir.Path);
+
+        Assert.Empty(library.Read().Titles);
+        Assert.Throws<HaedusException>(() => library.SetTitle("a", "X"));
+    }
+
+    [Fact]
+    public void Legacy_library_format_is_still_readable()
+    {
+        File.WriteAllText(LibraryPath, "{\"format\":\"" + LegacyData.OldLibraryFormat + "\",\"version\":1,\"titles\":{\"a\":\"Uno\"},\"collections\":[]}");
+
+        Assert.Equal("Uno", new HistoryLibrary(_dir.Path).Read().Titles["a"]);
+    }
 }

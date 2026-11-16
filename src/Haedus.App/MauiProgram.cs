@@ -31,6 +31,8 @@ public static class MauiProgram
         // Livello del log: argomenti (--debug), poi HAEDUS_LOG_LEVEL / HAEDUS_DEBUG, poi settings.json (issue #38).
         var diagnostics = DiagnosticOptions.Resolve(Environment.GetCommandLineArgs(), Environment.GetEnvironmentVariable, settingsStore.Load().DiagnosticLogLevel);
         var fileLogs = new FileLoggerProvider(paths.Logs, diagnostics.MinimumLevel);
+        if (paths.ModelsFallbackUsed)
+            fileLogs.CreateLogger("Haedus.Startup").LogModelsFallback();
 
         var builder = MauiApp.CreateBuilder();
         builder.UseMauiApp<App>();

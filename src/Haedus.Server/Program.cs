@@ -36,7 +36,10 @@ paths.CleanTemp();
 CleanUploads(paths);
 
 var diagnostics = DiagnosticOptions.Resolve(args, Environment.GetEnvironmentVariable, settingsStore.Load().DiagnosticLogLevel);
-builder.Logging.AddProvider(new FileLoggerProvider(paths.Logs, diagnostics.MinimumLevel));
+var fileLogs = new FileLoggerProvider(paths.Logs, diagnostics.MinimumLevel);
+builder.Logging.AddProvider(fileLogs);
+if (paths.ModelsFallbackUsed)
+    fileLogs.CreateLogger("Haedus.Startup").LogModelsFallback();
 
 builder.WebHost.ConfigureKestrel(k => k.Limits.MaxRequestBodySize = options.MaxUploadBytes);
 builder.Services.Configure<FormOptions>(f => f.MultipartBodyLengthLimit = options.MaxUploadBytes);

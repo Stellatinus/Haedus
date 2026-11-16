@@ -8,7 +8,7 @@
 
 Haedus vive in un repository pubblico su GitHub e si distribuisce con l'installer Velopack (ADR-0005), che già
 sa aggiornare l'app ma finora nessuno lo chiamava: ogni versione si reinstallava a mano. Il repository non ha
-GitHub Actions: le release si costruiscono dal PC (`scripts/release-locale.ps1`).
+GitHub Actions: le release si costruivano dal PC (`scripts/release-locale.ps1`). Dalla 2.3.0 le costruisce anche il workflow `release.yml`; lo script resta come alternativa locale.
 
 ## Decisione
 

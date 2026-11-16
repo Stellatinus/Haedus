@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { BridgeClient } from './bridge/client';
 import type { ExportFormat } from './bridge/protocol';
+import { ConfirmDialog } from './components/ConfirmDialog';
 import { ErrorBoundary } from './ErrorBoundary';
 import { FileList, type Selection } from './components/FileList';
 import { HistoryPanel } from './components/HistoryPanel';
@@ -40,8 +41,20 @@ export function App({ client }: { client: BridgeClient }) {
 
   return (
     <I18nProvider locale={locale}>
-      <Shell app={app} />
+      <RootBoundary>
+        <Shell app={app} />
+      </RootBoundary>
     </I18nProvider>
+  );
+}
+
+/** Ultima rete di sicurezza (issue #79): un errore fuori dal banco di lavoro non lascia la finestra bianca. */
+function RootBoundary({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
+  return (
+    <ErrorBoundary label={t('renderError')} retry={t('renderRetry')} reload={t('renderReload')}>
+      {children}
+    </ErrorBoundary>
   );
 }
 
@@ -54,6 +67,10 @@ function Shell({ app }: { app: HaedusState }) {
   const [language, setLanguage] = useState(app.settings?.language ?? 'auto');
   const [dirty, setDirty] = useState(false);
   const [toast, setToast] = useState<string>();
+  // Azione di navigazione in attesa della risposta al dialogo «modifiche non salvate» (issue #82).
+  const [pendingNav, setPendingNav] = useState<() => void>();
+  const saveHandle = useRef<(() => Promise<boolean>) | null>(null);
+  const [savingNav, setSavingNav] = useState(false);
   const error = app.error ? describeError(app.error.code) : undefined;
 
   useEffect(() => {
@@ -75,6 +92,29 @@ function Shell({ app }: { app: HaedusState }) {
   const paused = running && app.progress?.status === 'paused';
   const needsLanguage = Boolean(app.activeModel?.requiresLanguage) && language === 'auto';
   const editing = tab === 'home' && selection !== null && Boolean(app.open);
+  const unsaved = editing && dirty;
+
+  const { reportEditorDirty } = app;
+  useEffect(() => {
+    reportEditorDirty(unsaved);
+  }, [unsaved, reportEditorDirty]);
+
+  // Chiudere o ricaricare la pagina nel browser con correzioni non salvate chiede conferma.
+  useEffect(() => {
+    if (!unsaved) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [unsaved]);
+
+  /** Esegue la navigazione, o prima chiede cosa fare delle correzioni non salvate. */
+  const guarded = (action: () => void) => {
+    if (unsaved) setPendingNav(() => action);
+    else action();
+  };
 
   const tabs: { id: Tab; label: string; icon: IconName }[] = [
     { id: 'home', label: t('tabHome'), icon: 'home' },
@@ -88,6 +128,22 @@ function Shell({ app }: { app: HaedusState }) {
     setSelection(null);
   };
 
+  const resolveNav = async (choice: 'save' | 'discard' | 'cancel') => {
+    const action = pendingNav;
+    if (choice === 'cancel' || !action) {
+      setPendingNav(undefined);
+      return;
+    }
+    if (choice === 'save') {
+      setSavingNav(true);
+      const ok = await saveHandle.current?.();
+      setSavingNav(false);
+      if (!ok) return; // l'errore compare nel banner; il dialogo resta per scegliere di nuovo
+    }
+    setPendingNav(undefined);
+    action();
+  };
+
   const effectiveTheme = app.settings?.theme ?? (systemPrefersDark() ? 'dark' : 'light');
   const toggleTheme = () => app.settings && void app.saveSettings({ ...app.settings, theme: effectiveTheme === 'dark' ? 'light' : 'dark' });
 
@@ -95,6 +151,12 @@ function Shell({ app }: { app: HaedusState }) {
     setToast(message);
     setTimeout(() => setToast(undefined), 2200);
   }, []);
+
+  // Una trascrizione conclusa mentre si corregge un'altra non la sostituisce: la scelta resta all'utente.
+  const { deferred } = app;
+  useEffect(() => {
+    if (deferred) showToast(t('completedWhileEditing', { file: deferred.file }));
+  }, [deferred, showToast, t]);
 
   return (
     <div className="app">
@@ -104,7 +166,7 @@ function Shell({ app }: { app: HaedusState }) {
         </div>
         <nav className="nav__tabs" aria-label={t('sections')}>
           {tabs.map((item) => (
-            <button key={item.id} type="button" className={`tab${tab === item.id ? ' on' : ''}`} aria-current={tab === item.id ? 'page' : undefined} onClick={() => setTab(item.id)}>
+            <button key={item.id} type="button" className={`tab${tab === item.id ? ' on' : ''}`} aria-current={tab === item.id ? 'page' : undefined} onClick={() => guarded(() => setTab(item.id))}>
               <Icon name={item.icon} />
               <span>{item.label}</span>
             </button>
@@ -128,21 +190,27 @@ function Shell({ app }: { app: HaedusState }) {
             selection={selection}
             running={running}
             paused={paused}
-            onSelectQueue={(item) => {
-              if (item.status === 'done') void app.openQueueItem(item.key);
-              setSelection({ kind: 'queue', key: item.key });
-            }}
-            onSelectRecent={(id) => {
-              void app.openFromHistory(id);
-              setSelection({ kind: 'recent', id });
-            }}
-            onNew={() => setSelection(null)}
-            onStartQueue={() => void app.startQueue(language)}
+            onSelectQueue={(item) =>
+              guarded(() => {
+                if (item.status === 'done') void app.openQueueItem(item.key);
+                setSelection({ kind: 'queue', key: item.key });
+              })
+            }
+            onSelectRecent={(id) =>
+              guarded(() => {
+                void app.openFromHistory(id);
+                setSelection({ kind: 'recent', id });
+              })
+            }
+            onNew={() => guarded(() => setSelection(null))}
+            onStartQueue={() => guarded(() => void app.startQueue(language))}
             startDisabled={needsLanguage}
-            onAddFiles={() => {
-              void app.addToQueue();
-              setSelection(null);
-            }}
+            onAddFiles={() =>
+              guarded(() => {
+                void app.addToQueue();
+                setSelection(null);
+              })
+            }
           />
         )}
 
@@ -196,7 +264,7 @@ function Shell({ app }: { app: HaedusState }) {
                   onLanguage={setLanguage}
                   needsLanguage={needsLanguage}
                   running={running}
-                  onPick={() => void pick()}
+                  onPick={() => guarded(() => void pick())}
                   onOpenModels={() => setTab('models')}
                   onStart={() => void app.start(language)}
                   onStartQueue={() => app.startQueue(language)}
@@ -204,7 +272,7 @@ function Shell({ app }: { app: HaedusState }) {
               )
             ) : (
               <ErrorBoundary key={selection === null ? 'none' : JSON.stringify(selection)} label={t('renderError')} retry={t('renderRetry')}>
-                <Workbench app={app} selection={selection} onDirtyChange={setDirty} onCopied={() => showToast(t('copied'))} />
+                <Workbench app={app} selection={selection} onDirtyChange={setDirty} saveHandle={saveHandle} onCopied={() => showToast(t('copied'))} />
               </ErrorBoundary>
             ))}
           {tab === 'history' && (
@@ -220,6 +288,14 @@ function Shell({ app }: { app: HaedusState }) {
           {tab === 'settings' && <SettingsPanel app={app} />}
         </main>
       </div>
+      {pendingNav && (
+        <ConfirmDialog title={t('unsavedTitle')} confirmLabel={t('save')} onConfirm={() => void resolveNav('save')} onCancel={() => void resolveNav('cancel')}>
+          <p>{t('unsavedBody')}</p>
+          <button type="button" className="danger" disabled={savingNav} onClick={() => void resolveNav('discard')}>
+            {t('unsavedDiscard')}
+          </button>
+        </ConfirmDialog>
+      )}
       {toast && (
         <div className="toast" role="status">
           {toast}

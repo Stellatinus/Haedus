@@ -127,4 +127,68 @@ public sealed class TranscriptHistoryTests : IDisposable
         Assert.Equal(ErrorCodes.HistoryNotFound, Assert.Throws<HaedusException>(() => history.Load(entry.Id)).Code);
         Assert.Equal(ErrorCodes.InvalidRequest, Assert.Throws<HaedusException>(() => history.Load("../x")).Code);
     }
+
+    private const string ModelJson = "{\"modelId\":\"m\",\"displayName\":\"M\",\"file\":\"f\",\"sha256\":\"s\",\"runtime\":\"Cpu\"}";
+
+    [Theory]
+    [InlineData("{\"format\":\"haedus-transcript\",\"version\":1,\"result\":{}}")]
+    [InlineData("{\"format\":\"haedus-transcript\",\"version\":1,\"result\":{\"audioFileName\":\"a.wav\",\"model\":null,\"segments\":[]}}")]
+    [InlineData("{\"format\":\"haedus-transcript\",\"version\":1,\"result\":{\"audioFileName\":\"a.wav\",\"model\":" + ModelJson + ",\"segments\":null}}")]
+    [InlineData("{\"format\":\"haedus-transcript\",\"version\":1,\"result\":{\"audioFileName\":\"a.wav\",\"model\":" + ModelJson + ",\"segments\":[null]}}")]
+    public void Incomplete_transcript_json_is_ignored_by_list_and_load(string json)
+    {
+        var history = new TranscriptHistory(_dir.Path);
+        var good = history.Save(Result());
+        File.WriteAllText(Path.Combine(_dir.Path, "incompleto.json"), json);
+
+        Assert.Equal([good.Id], history.List().Select(e => e.Id));
+        Assert.Equal(ErrorCodes.HistoryNotFound, Assert.Throws<HaedusException>(() => history.Load("incompleto")).Code);
+    }
+
+    [Fact]
+    public void An_unreadable_file_does_not_break_the_list()
+    {
+        var history = new TranscriptHistory(_dir.Path);
+        var good = history.Save(Result());
+        // Una cartella con estensione .json: la lettura lancia UnauthorizedAccessException o IOException.
+        Directory.CreateDirectory(Path.Combine(_dir.Path, "cartella.json"));
+
+        Assert.Equal([good.Id], history.List().Select(e => e.Id));
+    }
+
+    [Fact]
+    public void Library_file_is_never_treated_as_a_transcript()
+    {
+        var history = new TranscriptHistory(_dir.Path);
+        new HistoryLibrary(_dir.Path).SetTitle("a", "Lezione");
+        var path = Path.Combine(_dir.Path, HistoryLibrary.FileName);
+
+        Assert.Equal(ErrorCodes.InvalidRequest, Assert.Throws<HaedusException>(() => history.Delete("library")).Code);
+        Assert.Equal(ErrorCodes.InvalidRequest, Assert.Throws<HaedusException>(() => history.Delete("LIBRARY")).Code);
+        Assert.Equal(ErrorCodes.InvalidRequest, Assert.Throws<HaedusException>(() => history.Load("library")).Code);
+        Assert.Equal(ErrorCodes.InvalidRequest, Assert.Throws<HaedusException>(() => history.UpdateSegments("library", [])).Code);
+        Assert.True(File.Exists(path));
+    }
+
+    [Fact]
+    public void Delete_refuses_files_that_are_not_valid_transcripts()
+    {
+        var history = new TranscriptHistory(_dir.Path);
+        var other = Path.Combine(_dir.Path, "altro.json");
+        File.WriteAllText(other, "{\"altro\":1}");
+
+        Assert.Equal(ErrorCodes.HistoryNotFound, Assert.Throws<HaedusException>(() => history.Delete("altro")).Code);
+        Assert.True(File.Exists(other));
+    }
+
+    [Fact]
+    public void Legacy_transcript_format_is_still_readable()
+    {
+        var history = new TranscriptHistory(_dir.Path);
+        var entry = history.Save(Result());
+        var path = Path.Combine(_dir.Path, entry.Id + ".json");
+        File.WriteAllText(path, File.ReadAllText(path).Replace("haedus-transcript", LegacyData.OldTranscriptFormat, StringComparison.Ordinal));
+
+        Assert.Single(history.List());
+    }
 }

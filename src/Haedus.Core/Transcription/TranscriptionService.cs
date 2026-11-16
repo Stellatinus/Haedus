@@ -105,7 +105,7 @@ public sealed partial class TranscriptionService : IDisposable
             {
                 Interlocked.CompareExchange(ref _current, null, job);
                 _single.Release();
-                Finished?.Invoke(job);
+                RaiseFinished(job);
             }
         });
         return job;
@@ -396,7 +396,42 @@ public sealed partial class TranscriptionService : IDisposable
             }
         }
 
-        Progress?.Invoke(new JobProgress(job.JobId, status, percent, processed, total, remaining, speed));
+        RaiseProgress(new JobProgress(job.JobId, status, percent, processed, total, remaining, speed));
+    }
+
+    // Un sottoscrittore che lancia non deve togliere la notifica agli altri né far restare appeso il job.
+    private void RaiseProgress(JobProgress progress)
+    {
+        if (Progress is not { } handlers)
+            return;
+        foreach (var handler in handlers.GetInvocationList().Cast<Action<JobProgress>>())
+        {
+            try
+            {
+                handler(progress);
+            }
+            catch (Exception ex)
+            {
+                LogSubscriberFailed(progress.JobId, nameof(Progress), ex.GetType().Name);
+            }
+        }
+    }
+
+    private void RaiseFinished(TranscriptionJob job)
+    {
+        if (Finished is not { } handlers)
+            return;
+        foreach (var handler in handlers.GetInvocationList().Cast<Action<TranscriptionJob>>())
+        {
+            try
+            {
+                handler(job);
+            }
+            catch (Exception ex)
+            {
+                LogSubscriberFailed(job.JobId, nameof(Finished), ex.GetType().Name);
+            }
+        }
     }
 
     private static int Percent(TimeSpan processed, TimeSpan total) =>
@@ -420,6 +455,9 @@ public sealed partial class TranscriptionService : IDisposable
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Trascrizione {JobId} annullata")]
     private partial void LogCancelled(string jobId);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Un sottoscrittore di {Event} ha lanciato {ExceptionType} (trascrizione {JobId})")]
+    private partial void LogSubscriberFailed(string jobId, string @event, string exceptionType);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Trascrizione {JobId} fallita: {Code}")]
     private partial void LogFailed(Exception ex, string jobId, string code);

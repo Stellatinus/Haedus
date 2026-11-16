@@ -48,7 +48,7 @@ public sealed class BridgeDispatcherTests : IDisposable
     {
         var id = $"c-{++_nextId}";
         var json = JsonSerializer.Serialize(new { v = version, id, type, payload }, BridgeProtocol.JsonOptions);
-        var response = JsonDocument.Parse(await _dispatcher.HandleAsync(json)).RootElement;
+        var response = JsonElement.Parse(await _dispatcher.HandleAsync(json));
         Assert.Equal(id, response.GetProperty("id").GetString());
         Assert.Equal("result", response.GetProperty("type").GetString());
         return response;
@@ -84,7 +84,7 @@ public sealed class BridgeDispatcherTests : IDisposable
         Assert.Equal(ErrorCodes.InvalidRequest, ErrorCode(await Call("models.remove")));
         Assert.Equal(ErrorCodes.ModelUnknown, ErrorCode(await Call("models.remove", new { modelId = "zzz" })));
 
-        var garbage = JsonDocument.Parse(await _dispatcher.HandleAsync("{not json")).RootElement;
+        var garbage = JsonElement.Parse(await _dispatcher.HandleAsync("{not json"));
         Assert.Equal(ErrorCodes.InvalidRequest, ErrorCode(garbage));
     }
 
@@ -394,7 +394,7 @@ public sealed class BridgeDispatcherTests : IDisposable
             new FakeHardware(TestData.Hardware()), new AudioLibrary([], TimeSpan.FromHours(1)), _transcription, _shell, new HistoryLocation(HistoryDir), NullLogger<BridgeDispatcher>.Instance);
 
         var json = JsonSerializer.Serialize(new { v = 1, id = "x", type = "models.download", payload = new { modelId = "base" } });
-        var response = JsonDocument.Parse(await dispatcher.HandleAsync(json)).RootElement;
+        var response = JsonElement.Parse(await dispatcher.HandleAsync(json));
 
         Assert.Equal(ErrorCodes.ModelNotVerified, ErrorCode(response));
     }
@@ -524,6 +524,42 @@ public sealed class BridgeDispatcherTests : IDisposable
     }
 
     [Fact]
+    public async Task Queue_survives_a_history_save_that_throws_a_non_io_exception()
+    {
+        // Un percorso con un carattere nullo fa lanciare ArgumentException al salvataggio, non IOException.
+        var audio = new AudioLibrary([new WavDecoder()], TimeSpan.FromHours(3));
+        using var transcription = new TranscriptionService(_store, audio, new EchoEngine(), NullLogger<TranscriptionService>.Instance);
+        var paths = _dir.AppPaths();
+        using var dispatcher = new BridgeDispatcher(paths, new SettingsStore(Path.Combine(_dir.Path, "s-non-io.json")), _store, new NoDownloads(),
+            new FakeHardware(TestData.Hardware()), audio, transcription, _shell, new HistoryLocation("cartella\0anomala"), NullLogger<BridgeDispatcher>.Instance);
+
+        async Task<JsonElement> Send(string type, object? payload = null)
+        {
+            var json = JsonSerializer.Serialize(new { v = BridgeProtocol.Version, id = $"q-{++_nextId}", type, payload }, BridgeProtocol.JsonOptions);
+            return Ok(JsonElement.Parse(await dispatcher.HandleAsync(json)));
+        }
+
+        _shell.NextOpen = _dir.File("base-non-io.bin", ModelContent);
+        await Send("models.import");
+        _shell.NextOpenMany.Add(_dir.File("uno-non-io.wav", TestData.Wav(16000, 1, 1)));
+        _shell.NextOpenMany.Add(_dir.File("due-non-io.wav", TestData.Wav(16000, 1, 2)));
+        var batch = await Send("audio.pickMany");
+        var audioIds = batch.GetProperty("picked").EnumerateArray().Select(p => p.GetProperty("audioId").GetString()).ToArray();
+        await Send("queue.add", new { audioIds, failed = Array.Empty<object>() });
+
+        await Send("queue.start", new { modelId = "base", language = "it" });
+        await _shell.WaitForEventAsync("queue.finished");
+
+        // Nessun file resta «Working» o in coda, il job è liberato e la coda può ripartire.
+        var state = await Send("queue.get");
+        Assert.False(state.GetProperty("running").GetBoolean());
+        Assert.True(!state.TryGetProperty("jobId", out var jobId) || jobId.ValueKind == JsonValueKind.Null);
+        Assert.All(state.GetProperty("items").EnumerateArray(), i => Assert.NotEqual("working", i.GetProperty("status").GetString()));
+        Assert.All(state.GetProperty("items").EnumerateArray(), i => Assert.NotEqual("queued", i.GetProperty("status").GetString()));
+        Assert.Null(transcription.Current);
+    }
+
+    [Fact]
     public async Task Queue_start_needs_a_known_model()
     {
         Assert.Equal(ErrorCodes.ModelNotInstalled, ErrorCode(await Call("queue.start")));
@@ -565,7 +601,7 @@ public sealed class BridgeDispatcherTests : IDisposable
             new FakeHardware(TestData.Hardware()), new AudioLibrary([], TimeSpan.FromHours(1)), _transcription, _shell,
             new HistoryLocation(HistoryDir), NullLogger<BridgeDispatcher>.Instance, updates);
         async Task<JsonElement> CallOn(string type) =>
-            JsonDocument.Parse(await dispatcher.HandleAsync(JsonSerializer.Serialize(new { v = 1, id = type, type }))).RootElement;
+            JsonElement.Parse(await dispatcher.HandleAsync(JsonSerializer.Serialize(new { v = 1, id = type, type })));
 
         Assert.Equal(ErrorCodes.UpdateUnavailable, ErrorCode(await CallOn("updates.apply")));
 
@@ -646,7 +682,7 @@ public sealed class BridgeDispatcherTests : IDisposable
             return Task.FromResult(NextSave);
         }
 
-        public void PostToUi(string json) => _events.Enqueue(JsonDocument.Parse(json).RootElement.Clone());
+        public void PostToUi(string json) => _events.Enqueue(JsonElement.Parse(json));
 
         public async Task<JsonElement> WaitForEventAsync(string name)
         {

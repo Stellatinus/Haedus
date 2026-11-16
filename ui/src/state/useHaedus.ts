@@ -65,6 +65,9 @@ export function useHaedus(client: BridgeClient) {
   const [jobId, setJobId] = useState<string>();
   const [progress, setProgress] = useState<JobProgress>();
   const [open, setOpen] = useState<OpenResult>();
+  // L'editor ha correzioni non salvate: un risultato appena concluso non deve sostituire quello aperto (issue #82).
+  const editorDirty = useRef(false);
+  const [deferred, setDeferred] = useState<{ id: number; file: string }>();
   const [history, setHistory] = useState<HistoryList>();
   const [downloads, setDownloads] = useState<Record<string, DownloadProgress>>({});
   const [error, setError] = useState<UiError>();
@@ -81,9 +84,10 @@ export function useHaedus(client: BridgeClient) {
   const queue = queueState.items;
   const queueRunning = queueState.running;
 
-  const guard = useCallback(async <T>(action: () => Promise<T>): Promise<T | undefined> => {
+  // `clear: false` per le letture di sfondo: non devono cancellare un errore nato in un altro flusso (issue #80).
+  const guard = useCallback(async <T>(action: () => Promise<T>, clear = true): Promise<T | undefined> => {
     try {
-      setError(undefined);
+      if (clear) setError(undefined);
       return await action();
     } catch (e) {
       setError(toUiError(e));
@@ -136,6 +140,18 @@ export function useHaedus(client: BridgeClient) {
     void load();
   }, [load]);
 
+  // Errori non gestiti fuori da React (promesse perse, eccezioni dei listener): si mostrano nel banner invece di sparire.
+  useEffect(() => {
+    const onRejection = (e: PromiseRejectionEvent) => setError(toUiError(e.reason));
+    const onError = (e: ErrorEvent) => setError(toUiError(e.error ?? e.message));
+    window.addEventListener('unhandledrejection', onRejection);
+    window.addEventListener('error', onError);
+    return () => {
+      window.removeEventListener('unhandledrejection', onRejection);
+      window.removeEventListener('error', onError);
+    };
+  }, []);
+
   useEffect(() => {
     const report = (e: unknown) => setError(toUiError(e));
     const offs = [
@@ -158,7 +174,8 @@ export function useHaedus(client: BridgeClient) {
       client.on('transcription.progress', (p) => setProgress(p)),
       // Gli eventi transcription.* riguardano solo le trascrizioni singole: la coda arriva con queue.changed.
       client.on('transcription.completed', ({ jobId: finished, result, historyId }) => {
-        setOpen({ result, jobId: finished, historyId });
+        if (editorDirty.current) setDeferred((d) => ({ id: (d?.id ?? 0) + 1, file: result.audioFileName }));
+        else setOpen({ result, jobId: finished, historyId });
         if (historyId) setNotice({ key: 'savedToHistory' });
         setJobId(undefined);
       }),
@@ -238,6 +255,8 @@ export function useHaedus(client: BridgeClient) {
   }, [client, estimateModelId, pendingKey, benchmark.entries]);
 
   // Nell'app il dialog nativo; nel browser (versione server) il selettore del browser e il caricamento sul server.
+  const benchmarkReference = useCallback(() => guard(() => client.call('benchmark.reference'), false), [client, guard]);
+
   const pickBatch = useCallback(async (): Promise<PickedBatch | null> => {
     if (!client.files) return client.call('audio.pickMany');
     setUploading(true);
@@ -339,7 +358,7 @@ export function useHaedus(client: BridgeClient) {
     /** Stima del tempo dei file in attesa, o `basis: none` se manca una misura valida per il modello scelto. */
     estimate,
     pendingDurations,
-    benchmarkReference: () => guard(() => client.call('benchmark.reference')),
+    benchmarkReference,
     /** Con `useReference` scarica (se manca) il file ufficiale; altrimenti si sceglie un file proprio. */
     startBenchmark: (useReference = false, selection?: { languages: string[]; scenarios: BenchmarkScenario[] }) =>
       guard(async () => {
@@ -357,6 +376,10 @@ export function useHaedus(client: BridgeClient) {
     error,
     notice,
     activity,
+    deferred,
+    reportEditorDirty: (dirty: boolean) => {
+      editorDirty.current = dirty;
+    },
     dismissError: () => setError(undefined),
     dismissNotice: () => setNotice(undefined),
     // Un solo file scelto resta una trascrizione singola; più file formano la coda.

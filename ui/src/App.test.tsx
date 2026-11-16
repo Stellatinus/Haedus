@@ -400,7 +400,7 @@ describe('App', () => {
   });
 
   it('can cancel the Test bench and keeps what was already measured', async () => {
-    const { user } = setup({ installed: ['base', 'small'], tick: 20 });
+    const { user } = setup({ installed: ['base', 'small'], tick: 200 });
     await user.click(await screen.findByRole('button', { name: 'Modelli' }));
     const bench = await screen.findByRole('region', { name: 'Test bench dei modelli' });
 
@@ -561,6 +561,44 @@ describe('App', () => {
 
     expect(await screen.findByText('Trascrizione annullata.', {}, { timeout: 2000 })).toBeInTheDocument();
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+  });
+
+  it('nel tab Modelli un download fallito resta visibile e il bridge non viene inondato (#80)', async () => {
+    const inner = createMockTransport({ tick: 1, uiLanguage: 'it', installed: [] });
+    let push: (raw: string) => void = () => {};
+    let referenceCalls = 0;
+    const transport = {
+      send(raw: string) {
+        if ((JSON.parse(raw) as { type: string }).type === 'benchmark.reference') referenceCalls++;
+        inner.send(raw);
+      },
+      onMessage(handler: (raw: string) => void) {
+        push = handler;
+        return inner.onMessage(handler);
+      },
+    };
+    const user = userEvent.setup();
+    render(<App client={new BridgeClient(transport)} />);
+    await user.click(await screen.findByRole('button', { name: 'Modelli' }));
+    await screen.findByRole('region', { name: 'Test bench dei modelli' });
+    await waitFor(() => expect(referenceCalls).toBe(1));
+
+    act(() => {
+      push(JSON.stringify({ v: 1, type: 'event', event: 'models.downloadFailed', payload: { modelId: 'base', error: { code: 'audio_codec_missing', message: 'x' } } }));
+    });
+    expect(await screen.findByRole('alert')).toHaveTextContent('audio_codec_missing');
+    await new Promise((r) => setTimeout(r, 30));
+    expect(screen.getByRole('alert')).toHaveTextContent('audio_codec_missing');
+    expect(referenceCalls).toBe(1);
+  });
+
+  it('un errore non gestito fuori da React compare nel banner (#79)', async () => {
+    setup({ installed: ['base'] });
+    await screen.findByRole('button', { name: 'Modelli' });
+    act(() => {
+      window.dispatchEvent(new PromiseRejectionEvent('unhandledrejection', { promise: Promise.resolve(), reason: new Error('boom') }));
+    });
+    expect(await screen.findByRole('alert')).toHaveTextContent('internal_error');
   });
 
   it('shows errors with a corrective action', async () => {

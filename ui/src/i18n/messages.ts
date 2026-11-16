@@ -203,6 +203,7 @@ const it = {
   desktopOnly: 'Haedus deve essere avviato dall’applicazione desktop.',
   renderError: 'Questa schermata ha avuto un problema e non può essere mostrata. I tuoi file non sono stati toccati.',
   renderRetry: 'Riprova',
+  renderReload: 'Ricarica',
 
   // Motivazioni della raccomandazione
   reason_ram_limit: 'RAM totale {total}: si usano modelli che richiedono al massimo {limit}.',
@@ -283,6 +284,10 @@ const it = {
   toTranscribe: 'Da trascrivere',
   pickFiles: 'Scegli file',
   saveEdited: 'Modifiche non salvate',
+  unsavedTitle: 'Modifiche non salvate',
+  unsavedBody: 'Hai corretto la trascrizione senza salvare. Vuoi salvare le modifiche prima di continuare?',
+  unsavedDiscard: 'Scarta',
+  completedWhileEditing: 'La trascrizione di {file} è pronta: aprila da Recenti quando hai finito di correggere.',
   saveHistory: 'Salvato nella cronologia',
   toggleTheme: 'Cambia tema chiaro o scuro',
   export: 'Esporta',
@@ -626,6 +631,7 @@ const en: Record<MessageKey, string> = {
   desktopOnly: 'Haedus must be started from the desktop application.',
   renderError: 'This screen ran into a problem and cannot be shown. Your files have not been touched.',
   renderRetry: 'Try again',
+  renderReload: 'Reload',
 
   reason_ram_limit: '{total} total RAM: using models that need at most {limit}.',
   reason_cpu_budget: '{cores} logical cores: the heaviest model suited to this processor is {model}.',
@@ -704,6 +710,10 @@ const en: Record<MessageKey, string> = {
   toTranscribe: 'To transcribe',
   pickFiles: 'Choose files',
   saveEdited: 'Unsaved changes',
+  unsavedTitle: 'Unsaved changes',
+  unsavedBody: 'You edited the transcript without saving. Do you want to save your changes before continuing?',
+  unsavedDiscard: 'Discard',
+  completedWhileEditing: 'The transcript of {file} is ready: open it from Recent when you finish editing.',
   saveHistory: 'Saved to history',
   toggleTheme: 'Switch light or dark theme',
   export: 'Export',
