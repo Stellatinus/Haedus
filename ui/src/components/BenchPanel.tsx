@@ -48,7 +48,11 @@ export function BenchPanel({ app }: { app: HaedusState }) {
   // Cosa provare: lingue e condizioni a spunta. Di base la lingua scelta e l'inglese, pulito e con rumore.
   const [pickedLanguages, setPickedLanguages] = useState<string[]>();
   const [pickedScenarios, setPickedScenarios] = useState<BenchmarkScenario[]>(['clean', 'noisy']);
+  const [pickedOnlyNew, setPickedOnlyNew] = useState<boolean>();
   const { benchmark, benchmarkProgress: progress } = app;
+  const validEntries = benchmark.entries.filter((e) => e.stale === 'none');
+  const measuredIds = new Set(validEntries.map((e) => e.modelId));
+  const measuredPairs = new Set(validEntries.map((e) => `${e.modelId}|${e.clipId ?? ''}`));
   const loadReference = app.benchmarkReference;
   useEffect(() => {
     // Leggere l'elenco dei brani non scarica nulla: serve a proporre le lingue disponibili.
@@ -60,6 +64,13 @@ export function BenchPanel({ app }: { app: HaedusState }) {
   const languagesChosen = pickedLanguages ?? (own ? availableLanguages.filter((l) => l === own || l === 'en') : availableLanguages);
   const chosenClips = (reference?.clips ?? []).filter((c) => languagesChosen.includes(c.language) && pickedScenarios.includes(c.scenario));
   const chosenFiles = (reference?.files ?? []).filter((f) => languagesChosen.includes(f.language));
+  // Cosa manca: modelli pronti senza nessuna misura valida (con un file proprio) e coppie modello-brano senza misura valida
+  // (modelli scaricati dopo l'ultimo test o brani pubblicati dopo). Di base si prova solo quello; si può rifare tutto togliendo la spunta.
+  const newModels = app.readyModels.filter((m) => !measuredIds.has(m.id));
+  const missingPairs = app.readyModels.flatMap((m) => chosenClips.filter((c) => !measuredPairs.has(`${m.id}|${c.id}`)).map(() => m));
+  const missingModels = [...new Map([...newModels, ...missingPairs].map((m) => [m.id, m])).values()];
+  const canLimit = app.desktop && measuredIds.size > 0 && missingModels.length > 0;
+  const onlyNew = canLimit && (pickedOnlyNew ?? true);
   const toggle = <T extends string>(list: T[], value: T) => (list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
   const busy = benchmark.running || Boolean(app.jobId) || app.queueRunning;
   const names = new Map(app.models.map((m) => [m.id, m.displayName]));
@@ -69,7 +80,7 @@ export function BenchPanel({ app }: { app: HaedusState }) {
     const info = reference ?? (await app.benchmarkReference());
     if (!info?.available || chosenClips.length === 0) return;
     setReference(info);
-    if (chosenFiles.every((f) => f.cached)) void app.startBenchmark(true, selection);
+    if (chosenFiles.every((f) => f.cached)) void app.startBenchmark(true, selection, onlyNew);
     else setAsking(true);
   };
   const number = formatNumber;
@@ -131,6 +142,13 @@ export function BenchPanel({ app }: { app: HaedusState }) {
         </fieldset>
       )}
 
+      {canLimit && !benchmark.running && (
+        <label className="bench__only-new">
+          <input type="checkbox" checked={onlyNew} onChange={(e) => setPickedOnlyNew(e.target.checked)} />{' '}
+          {t('benchOnlyNew', { count: missingPairs.length > 0 ? missingPairs.length : newModels.length, models: missingModels.map((m) => m.displayName).join(', ') })}
+        </label>
+      )}
+
       {app.desktop && (
         <div className="toolbar">
           {benchmark.running ? (
@@ -142,7 +160,7 @@ export function BenchPanel({ app }: { app: HaedusState }) {
               <button type="button" disabled={busy || app.readyModels.length === 0 || chosenClips.length === 0} aria-describedby="bench-hint" onClick={() => void startOfficial()}>
                 {chosenFiles.length > 0 && chosenFiles.every((f) => f.cached) ? t('benchOfficialStartCached') : t('benchOfficialStart')}
               </button>
-              <button type="button" className="secondary" disabled={busy || app.readyModels.length === 0} aria-describedby="bench-hint" onClick={() => void app.startBenchmark()}>
+              <button type="button" className="secondary" disabled={busy || app.readyModels.length === 0} aria-describedby="bench-hint" onClick={() => void app.startBenchmark(false, undefined, onlyNew)}>
                 {t('benchStart')}
               </button>
             </>
@@ -276,7 +294,7 @@ export function BenchPanel({ app }: { app: HaedusState }) {
           confirmLabel={t('benchOfficialConfirm')}
           onConfirm={() => {
             setAsking(false);
-            void app.startBenchmark(true, selection).then(() => app.benchmarkReference().then(setReference));
+            void app.startBenchmark(true, selection, onlyNew).then(() => app.benchmarkReference().then(setReference));
           }}
           onCancel={() => setAsking(false)}
         >

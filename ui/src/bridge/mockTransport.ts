@@ -627,7 +627,8 @@ export function createMockTransport(options: MockOptions = {}): Transport {
         if (options.cancelDialogs) return null;
         if (payload?.useReference) referenceCached = true;
         if (benchRunning) throw { code: 'transcription_busy', message: 'busy' };
-        const ready = models.filter((m) => m.state === 'ready');
+        const validPairs = new Set([...benchEntries.values()].filter((e) => e.stale === 'none').map((e) => `${e.modelId}|${e.clipId ?? ''}`));
+        const readyAll = models.filter((m) => m.state === 'ready');
         benchRunning = true;
         benchCancel = false;
         const outcomes: BenchmarkProgress[] = [];
@@ -640,7 +641,17 @@ export function createMockTransport(options: MockOptions = {}): Transport {
           throw { code: 'benchmark_nothing_selected', message: 'nothing selected' };
         }
         const jobs = payload?.useReference ? chosen.map((c) => ({ clip: c })) : [{ clip: undefined }];
-        const total = ready.length * jobs.length;
+        // «Solo ciò che manca»: coppie modello-brano senza misura valida (con un file proprio, modelli senza nessuna misura valida).
+        const plan = readyAll.flatMap((m) =>
+          jobs
+            .filter(({ clip }) => !payload?.onlyNew || (clip ? !validPairs.has(`${m.id}|${clip.id}`) : ![...validPairs].some((p) => p.startsWith(`${m.id}|`))))
+            .map(({ clip }) => ({ m, clip })),
+        );
+        if (payload?.onlyNew && plan.length === 0) {
+          benchRunning = false;
+          throw { code: 'benchmark_nothing_new', message: 'nothing new' };
+        }
+        const total = plan.length;
         const step = (i: number) => {
           if (benchCancel) {
             benchRunning = false;
@@ -652,8 +663,7 @@ export function createMockTransport(options: MockOptions = {}): Transport {
             event('benchmark.completed', { outcomes, snapshot: benchSnapshot() });
             return;
           }
-          const m = ready[Math.floor(i / jobs.length)];
-          const { clip } = jobs[i % jobs.length];
+          const { m, clip } = plan[i];
           event('benchmark.progress', { modelId: m.id, index: i, total, phase: 'running', ...(clip ? { clipId: clip.id } : {}) });
           later(() => {
             const speed = Math.round((64 / m.relativeCost) * 10) / 10;
@@ -670,8 +680,10 @@ export function createMockTransport(options: MockOptions = {}): Transport {
             step(i + 1);
           });
         };
-        // Un nuovo test sostituisce le misure precedenti.
-        benchEntries.clear();
+        // Un nuovo test sostituisce le misure precedenti; con «solo i nuovi» restano quelle degli altri modelli.
+        if (payload?.onlyNew) {
+          for (const [key, e] of [...benchEntries]) if (plan.some((p) => p.m.id === e.modelId && (p.clip?.id ?? undefined) === e.clipId)) benchEntries.delete(key);
+        } else benchEntries.clear();
         later(() => step(0));
         return { started: true, fileName: 'riferimento.wav', duration: 90 };
       }

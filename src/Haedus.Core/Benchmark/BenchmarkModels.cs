@@ -21,7 +21,8 @@ public sealed record BenchmarkEntry(
     double? Accuracy = null,
     string? ClipId = null,
     string? Language = null,
-    string? Scenario = null);
+    string? Scenario = null,
+    string? ClipFingerprint = null);
 
 /// <summary>Contenuto di benchmark.json: le misure valgono per l'impronta dell'hardware con cui sono state fatte.</summary>
 public sealed record BenchmarkFile(int Version, string Fingerprint, IReadOnlyList<BenchmarkEntry> Entries)

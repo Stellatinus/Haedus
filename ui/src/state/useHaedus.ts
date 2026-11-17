@@ -359,10 +359,10 @@ export function useHaedus(client: BridgeClient) {
     estimate,
     pendingDurations,
     benchmarkReference,
-    /** Con `useReference` scarica (se manca) il file ufficiale; altrimenti si sceglie un file proprio. */
-    startBenchmark: (useReference = false, selection?: { languages: string[]; scenarios: BenchmarkScenario[] }) =>
+    /** Con `useReference` scarica (se manca) il file ufficiale; altrimenti si sceglie un file proprio. Con `onlyNew` prova solo i modelli senza misura valida. */
+    startBenchmark: (useReference = false, selection?: { languages: string[]; scenarios: BenchmarkScenario[] }, onlyNew = false) =>
       guard(async () => {
-        const started = await client.call('benchmark.start', useReference ? { useReference: true, ...selection } : undefined);
+        const started = await client.call('benchmark.start', useReference ? { useReference: true, ...selection, ...(onlyNew ? { onlyNew } : {}) } : onlyNew ? { onlyNew } : undefined);
         if (started) setBenchmark((b) => ({ ...b, running: true }));
       }),
     cancelBenchmark: () => guard(() => client.call('benchmark.cancel')),

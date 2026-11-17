@@ -5,8 +5,10 @@ namespace Haedus.Core.Benchmark;
 
 /// <summary>
 /// Versione del Test bench: una misura salvata vale finché questa versione non cambia. Non segue la versione dell'app, così un
-/// aggiornamento qualsiasi non obbliga a rifare il test. Cambia da sola quando cambiano i brani (file, testi, rumore);
-/// <see cref="Revision"/> si alza a mano quando cambia qualcosa che cambia i numeri senza toccare i brani.
+/// aggiornamento qualsiasi non obbliga a rifare il test. Riguarda il modo di misurare (revisione, rumore): aggiungere un
+/// brano NON la cambia, così le misure già fatte restano valide e si provano solo i brani nuovi. Ogni misura porta anche
+/// l'impronta del suo brano (<see cref="ClipFingerprint"/>): se un brano cambia (file, testo, rumore) perdono valore
+/// solo le misure di quel brano. <see cref="Revision"/> si alza a mano quando cambia qualcosa che cambia i numeri.
 /// </summary>
 public static class BenchmarkVersion
 {
@@ -24,10 +26,27 @@ public static class BenchmarkVersion
     /// </summary>
     public const string CoveredEngines = "Whisper.net=1.9.1;sherpa-onnx=2.0.1";
 
-    /// <summary>Revisione e impronta dei brani, per esempio <c>1-3fa9c2d1</c>.</summary>
-    public static string Current { get; } = Compute();
+    /// <summary>Revisione e impronta del modo di misurare (non dei brani), per esempio <c>1-3fa9c2d1</c>.</summary>
+    public static string Current { get; } = ComputeCurrent();
 
-    private static string Compute()
+    /// <summary>
+    /// Versione in uso fino alla 3.1.0, che comprendeva l'impronta di tutti i brani. Serve solo a riconoscere le misure
+    /// salvate allora, fatte con i brani di oggi: <see cref="BenchmarkStore.MigrateLegacy"/> le porta al formato nuovo.
+    /// </summary>
+    public static string Legacy { get; } = ComputeLegacy();
+
+    /// <summary>Impronta di un brano: file, brano di rumore e testo di riferimento (il rumore globale sta in <see cref="Current"/>).</summary>
+    public static string ClipFingerprint(BenchmarkClip clip) =>
+        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes($"{clip.Id}:{clip.Sha256}:{clip.NoiseSourceId}:{clip.ReferenceText}")))[..12];
+
+    private static string ComputeCurrent()
+    {
+        var text = $"{Revision}|{BenchmarkClips.NoiseSeed}|{BenchmarkClips.NoiseSnrDb}";
+        var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("v2|" + text)));
+        return $"{Revision}-{hash[..8]}";
+    }
+
+    private static string ComputeLegacy()
     {
         var builder = new StringBuilder();
         builder.Append(Revision).Append('|').Append(BenchmarkClips.NoiseSeed).Append('|').Append(BenchmarkClips.NoiseSnrDb);

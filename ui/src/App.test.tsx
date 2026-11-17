@@ -420,6 +420,39 @@ describe('App', () => {
     expect(within(row).getByText('Valida')).toBeInTheDocument();
   });
 
+  it('measures only the models without a measurement when a file is chosen, keeping the others', async () => {
+    const { user } = setup({ installed: ['base', 'small'], benchmark: { base: 8 } });
+    await user.click(await screen.findByRole('button', { name: 'Modelli' }));
+    const bench = await screen.findByRole('region', { name: 'Test bench dei modelli' });
+
+    expect(await within(bench).findByRole('checkbox', { name: /Misura solo ciò che manca/ })).toBeChecked();
+    await user.click(within(bench).getByRole('button', { name: 'Scegli un file e avvia il test' }));
+    expect(await screen.findByText('Test bench completato.')).toBeInTheDocument();
+    const table = within(bench).getByRole('table', { name: 'Risultati del test' });
+    expect(within(table).getByRole('row', { name: /Base/ })).toBeInTheDocument();
+    expect(within(table).getByRole('row', { name: /Small/ })).toBeInTheDocument();
+  });
+
+  it('measures only the missing recordings with the official files and can redo everything', async () => {
+    const { user } = setup({ installed: ['base', 'small'] });
+    await user.click(await screen.findByRole('button', { name: 'Modelli' }));
+    const bench = await screen.findByRole('region', { name: 'Test bench dei modelli' });
+
+    // Senza nessuna misura valida non c'è niente da conservare: la scelta non compare.
+    expect(within(bench).queryByRole('checkbox', { name: /Misura solo ciò che manca/ })).not.toBeInTheDocument();
+    await user.click(await within(bench).findByRole('checkbox', { name: 'Inglese' }));
+    await user.click(within(bench).getByRole('button', { name: 'Scarica i brani ufficiali e avvia' }));
+    await user.click(await screen.findByRole('button', { name: 'Scarica e avvia' }));
+    expect(await screen.findByText('Test bench completato.')).toBeInTheDocument();
+
+    // Con l'italiano già misurato, aggiungere l'inglese propone solo i brani inglesi: la spunta c'è e conserva le misure.
+    await user.click(await within(bench).findByRole('checkbox', { name: 'Inglese' }));
+    const only = await within(bench).findByRole('checkbox', { name: /Misura solo ciò che manca/ });
+    expect(only).toBeChecked();
+    await user.click(only);
+    expect(only).not.toBeChecked();
+  });
+
   it('estimates the time of the whole queue from the Test bench before starting', async () => {
     const { user } = setup({ installed: ['base'], batchFiles: ['a.mp3', 'b.mp3'], benchmark: { base: 8 } });
 
