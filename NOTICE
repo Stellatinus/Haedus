@@ -20,6 +20,16 @@ Parakeet TDT 0.6B v3 by NVIDIA, licensed under CC-BY-4.0
   (https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8).
   Licenza: https://creativecommons.org/licenses/by/4.0/
 
+Parakeet TDT 0.6B v3 Ultra: post-training di Moondream su NVIDIA Parakeet TDT 0.6B v3, CC-BY-4.0
+  https://huggingface.co/moondream/parakeet-ultra
+  Convertito in int8 ONNX per sherpa-onnx da csukuangfj (export non ufficiale)
+  (https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-ultra-int8).
+  Licenza: https://creativecommons.org/licenses/by/4.0/
+
+Whisper large-v3 Turbo italiano by LocalAI-io, MIT License
+  https://huggingface.co/LocalAI-io/whisper-large-v3-turbo-it-ggml
+  Fine-tune non ufficiale di OpenAI Whisper large-v3 Turbo su Common Voice 25.0 (italiano), convertito in GGML.
+
 Canary-1B-v2 by NVIDIA, licensed under CC-BY-4.0
   https://huggingface.co/nvidia/canary-1b-v2
   Convertito in int8 ONNX per sherpa-onnx da bnoordhuis (export non ufficiale)
