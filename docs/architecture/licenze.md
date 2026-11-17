@@ -23,6 +23,8 @@ Issue: #1. Aggiornare a ogni nuova dipendenza (controllo in #9). Lo stato "verif
 | ONNX Runtime (incluso in sherpa-onnx) | Inferenza | MIT | Avviso nel NOTICE | Verificato 2026-10-23 |
 | NVIDIA Parakeet TDT 0.6B v3 (export int8 di csukuangfj) | Modello | CC-BY-4.0 | **Attribuzione obbligatoria**: mostrata nell'app (scheda Modelli) e nel NOTICE | Verificato 2026-10-23 (scheda del modello) |
 | NVIDIA Canary-1B-v2 (export int8 della community, bnoordhuis) | Modello | CC-BY-4.0 | Come sopra, più l'indicazione che l'export non è ufficiale | Verificato 2026-10-23 (scheda dell'export) |
+| Parakeet TDT 0.6B v3 Ultra (Moondream; export int8 di csukuangfj) | Modello | CC-BY-4.0 (scheda dell'export) | **Attribuzione obbligatoria**, come sopra; export non ufficiale | Letto sulla scheda il 2026-11-17 |
+| Whisper large-v3 Turbo italiano (fine-tune LocalAI-io, GGML) | Modello | MIT (scheda del repository) | Avviso nel NOTICE; fine-tune non ufficiale | Letto sulla scheda il 2026-11-17 |
 | Cohere Transcribe 03-2026 | **Non incluso** | Apache-2.0 (export ONNX della community) | — | Rimandato (vedi ADR-0009) |
 
 ## Regole

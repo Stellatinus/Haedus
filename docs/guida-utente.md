@@ -27,8 +27,12 @@ Senza connessione puoi usare **Importa modello da file…** con un file `ggml-*.
 | Tiny / Base | 75–150 MB | PC poco potenti, prove veloci |
 | Small | ~490 MB | Buon compromesso per la maggior parte dei PC |
 | Large v3 Turbo (q5_0) | ~570 MB | Qualità alta su PC con 8+ core |
+| Large v3 Turbo (q8_0) *(anteprima)* | ~870 MB | Come il Turbo q5_0 ma meno compresso: un po' più fedele, un po' più pesante |
+| Large v3 Turbo italiano (q5_0) *(anteprima)* | ~570 MB | Turbo rifinito sull'italiano da LocalAI-io (non ufficiale); da provare |
+| Large v3 (q5_0) *(anteprima)* | ~1,1 GB | Large v3 compresso: metà dello spazio, stessa lentezza |
 | Medium / Large v3 | 1,5–3 GB | Massima qualità, molto lenti senza un PC potente |
 | Parakeet TDT 0.6B v3 *(anteprima)* | ~670 MB | Molto veloce anche sulla CPU, rileva la lingua da solo |
+| Parakeet TDT 0.6B v3 Ultra *(anteprima)* | ~670 MB | Parakeet rifinito da Moondream (non ufficiale), stessa velocità |
 | Canary 1B v2 *(anteprima)* | ~1,4 GB | Qualità simile a Parakeet, più lento; **richiede di scegliere la lingua** |
 | Cohere Transcribe *(anteprima)* | ~2,9 GB | 14 lingue, pesante; **richiede di scegliere la lingua**, senza tempi per frase |
 

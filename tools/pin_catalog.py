@@ -74,8 +74,8 @@ def main() -> int:
         revision = args.revision or (pinned if args.check and pinned else get_json(API.format(repo=repo))["sha"])
         files = tree_files(repo, revision)
         for model in catalog["models"]:
-            if model.get("files"):
-                continue
+            if model.get("files") or model.get("source"):
+                continue  # a più file o con sorgente propria: vedi sotto
             entry = files.get(model["file"])
             if entry is None or "lfs" not in entry:
                 problems.append(f"{model['id']}: {model['file']} non trovato nella revisione {revision}")
@@ -93,7 +93,8 @@ def main() -> int:
 
     # --- modelli a più file: sorgente propria
     for model in catalog["models"]:
-        if not model.get("files"):
+        single = not model.get("files") and model.get("source")  # file singolo con sorgente propria
+        if not model.get("files") and not single:
             continue
         if args.model and model["id"] != args.model:
             continue
@@ -108,20 +109,22 @@ def main() -> int:
             revision = get_json(API.format(repo=source["repository"]))["sha"]
         files = tree_files(source["repository"], revision)
         total = 0
-        for item in model["files"]:
-            entry = files.get(item["path"])
+        items = model["files"] if not single else [model]
+        for item in items:
+            path = item["path"] if not single else item["file"]
+            entry = files.get(path)
             if entry is None:
-                problems.append(f"{model['id']}: {item['path']} non trovato in {source['repository']}@{revision[:10]}")
+                problems.append(f"{model['id']}: {path} non trovato in {source['repository']}@{revision[:10]}")
                 continue
-            sha256, size = file_facts(source["repository"], revision, entry, item["path"])
+            sha256, size = file_facts(source["repository"], revision, entry, path)
             if args.check:
                 if item["sha256"] != sha256 or item["sizeBytes"] != size:
-                    problems.append(f"{model['id']}/{item['path']}: atteso sha256={sha256} size={size}, trovato sha256={item['sha256']} size={item['sizeBytes']}")
+                    problems.append(f"{model['id']}/{path}: atteso sha256={sha256} size={size}, trovato sha256={item['sha256']} size={item['sizeBytes']}")
             else:
                 item["sha256"], item["sizeBytes"] = sha256, size
             total += size
         if args.check:
-            if model["sizeBytes"] != sum(i["sizeBytes"] for i in model["files"]):
+            if not single and model["sizeBytes"] != sum(i["sizeBytes"] for i in model["files"]):
                 problems.append(f"{model['id']}: sizeBytes non è la somma dei file")
         else:
             source["revision"] = revision

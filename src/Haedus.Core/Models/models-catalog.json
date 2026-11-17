@@ -84,6 +84,20 @@
       "license": "MIT"
     },
     {
+      "id": "large-v3-turbo-q8_0",
+      "displayName": "Large v3 Turbo (q8_0)",
+      "file": "ggml-large-v3-turbo-q8_0.bin",
+      "quantization": "q8_0",
+      "sizeBytes": 874188075,
+      "sha256": "317eb69c11673c9de1e1f0d459b253999804ec71ac4c23c17ecf5fbe24e259a1",
+      "ramRequiredBytes": 1500000000,
+      "relativeCost": 10,
+      "qualityRank": 10,
+      "multilingual": true,
+      "license": "MIT",
+      "preview": true
+    },
+    {
       "id": "medium",
       "displayName": "Medium",
       "file": "ggml-medium.bin",
@@ -108,6 +122,40 @@
       "qualityRank": 6,
       "multilingual": true,
       "license": "MIT"
+    },
+    {
+      "id": "large-v3-q5_0",
+      "displayName": "Large v3 (q5_0)",
+      "file": "ggml-large-v3-q5_0.bin",
+      "quantization": "q5_0",
+      "sizeBytes": 1081140203,
+      "sha256": "d75795ecff3f83b5faa89d1900604ad8c780abd5739fae406de19f23ecd98ad1",
+      "ramRequiredBytes": 2100000000,
+      "relativeCost": 28,
+      "qualityRank": 11,
+      "multilingual": true,
+      "license": "MIT",
+      "preview": true
+    },
+    {
+      "id": "large-v3-turbo-it-q5_0",
+      "displayName": "Large v3 Turbo italiano (q5_0)",
+      "file": "ggml-model-q5_0.bin",
+      "quantization": "q5_0",
+      "sizeBytes": 574041195,
+      "sha256": "55b0dcac9cd64d51b83a30ee5297bdbef11c379da5e13c0f17807c1522dafcc8",
+      "ramRequiredBytes": 1200000000,
+      "relativeCost": 10,
+      "qualityRank": 12,
+      "multilingual": true,
+      "license": "MIT",
+      "preview": true,
+      "source": {
+        "repository": "LocalAI-io/whisper-large-v3-turbo-it-ggml",
+        "revision": "c9aff1689a2edd95743e2ba2df87ece57c97ff17",
+        "urlTemplate": "https://huggingface.co/LocalAI-io/whisper-large-v3-turbo-it-ggml/resolve/{revision}/{file}"
+      },
+      "attribution": "Whisper large-v3 Turbo fine-tuned for Italian on Common Voice 25.0 by LocalAI-io, licensed under MIT. Based on OpenAI Whisper (MIT). Non-official fine-tune, converted to GGML."
     },
     {
       "id": "parakeet-tdt-0.6b-v3-int8",
@@ -156,6 +204,49 @@
         "measuredByProject": false
       },
       "attribution": "Parakeet TDT 0.6B v3 by NVIDIA, licensed under CC-BY-4.0. Converted to int8 ONNX for sherpa-onnx.",
+      "preview": true,
+      "requiresLanguage": false
+    },
+    {
+      "id": "parakeet-tdt-0.6b-v3-ultra-int8",
+      "displayName": "Parakeet TDT 0.6B v3 Ultra (int8)",
+      "file": "parakeet-tdt-0.6b-v3-ultra-int8",
+      "quantization": "int8",
+      "sizeBytes": 670576835,
+      "ramRequiredBytes": 1500000000,
+      "relativeCost": 2,
+      "qualityRank": 13,
+      "multilingual": true,
+      "license": "CC-BY-4.0",
+      "engine": "sherpa-transducer",
+      "source": {
+        "repository": "csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-ultra-int8",
+        "revision": "402e1190ce85b9793118ee223db21fb0d12f52db",
+        "urlTemplate": "https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-ultra-int8/resolve/{revision}/{file}"
+      },
+      "files": [
+        {
+          "path": "encoder.int8.onnx",
+          "sizeBytes": 652282345,
+          "sha256": "b43072e1b721f18a3df03fcfeb763ff7c4debdf29843598a3aba2f703e2780a3"
+        },
+        {
+          "path": "decoder.int8.onnx",
+          "sizeBytes": 11845274,
+          "sha256": "1fab98fe6c12aded87d2da66272cc9e148d0a0044ce3850a12fe56302ec4a922"
+        },
+        {
+          "path": "joiner.int8.onnx",
+          "sizeBytes": 6355277,
+          "sha256": "8a71aaccfdba3d451775507a889afd2257d2e754463fd81095a8c8f290f924c2"
+        },
+        {
+          "path": "tokens.txt",
+          "sizeBytes": 93939,
+          "sha256": "d58544679ea4bc6ac563d1f545eb7d474bd6cfa467f0a6e2c1dc1c7d37e3c35d"
+        }
+      ],
+      "attribution": "Parakeet TDT 0.6B v3 Ultra: post-training by Moondream of NVIDIA Parakeet TDT 0.6B v3, licensed under CC-BY-4.0. Converted to int8 ONNX for sherpa-onnx (non-official export).",
       "preview": true,
       "requiresLanguage": false
     },
