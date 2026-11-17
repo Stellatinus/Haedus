@@ -75,6 +75,41 @@ public sealed class BenchmarkStore
         }
     }
 
+    /// <summary>Toglie le misure che soddisfano la condizione (anche quelle non più valide) e lascia le altre: serve a rifare solo certe prove.</summary>
+    public void RemoveWhere(Func<BenchmarkEntry, bool> predicate)
+    {
+        lock (_gate)
+        {
+            var current = Read();
+            if (!current.Entries.Any(predicate))
+                return;
+            Write(current with { Entries = current.Entries.Where(e => !predicate(e)).ToList() });
+        }
+    }
+
+    /// <summary>
+    /// Porta al formato attuale le misure salvate con la versione precedente (fino alla 3.1.0), che valevano per l'insieme dei
+    /// brani di allora: sono quelli di oggi, quindi restano valide e da qui in poi ogni misura vale per il suo brano.
+    /// Da chiamare all'avvio, prima che l'elenco dei brani cambi.
+    /// </summary>
+    public void MigrateLegacy()
+    {
+        lock (_gate)
+        {
+            var current = Read();
+            if (!current.Entries.Any(e => e.BenchmarkVersion == BenchmarkVersion.Legacy))
+                return;
+            var upgraded = current.Entries.Select(e =>
+            {
+                if (e.BenchmarkVersion != BenchmarkVersion.Legacy)
+                    return e;
+                var clip = e.ClipId is null ? null : BenchmarkClips.Find(e.ClipId);
+                return e with { BenchmarkVersion = BenchmarkVersion.Current, ClipFingerprint = clip is null ? null : BenchmarkVersion.ClipFingerprint(clip) };
+            }).ToList();
+            Write(current with { Entries = upgraded });
+        }
+    }
+
     /// <summary>Tutte le misure con il loro stato rispetto all'hardware, ai modelli installati e alla versione dell'app.</summary>
     public IReadOnlyList<BenchmarkView> Views(string fingerprint, Func<string, string?> identityOf, string benchmarkVersion)
     {
@@ -121,7 +156,12 @@ public sealed class BenchmarkStore
             return BenchmarkStaleReason.HardwareChanged;
         if (identityOf(entry.ModelId) != entry.ModelIdentity)
             return BenchmarkStaleReason.ModelChanged;
-        return entry.BenchmarkVersion == benchmarkVersion ? BenchmarkStaleReason.None : BenchmarkStaleReason.TestChanged;
+        if (entry.BenchmarkVersion != benchmarkVersion)
+            return BenchmarkStaleReason.TestChanged;
+        // Una misura su un brano ufficiale vale finché quel brano è lo stesso (file, testo, rumore).
+        if (entry.ClipId is not null && (BenchmarkClips.Find(entry.ClipId) is not { } clip || entry.ClipFingerprint != BenchmarkVersion.ClipFingerprint(clip)))
+            return BenchmarkStaleReason.TestChanged;
+        return BenchmarkStaleReason.None;
     }
 
     private void Write(BenchmarkFile file)

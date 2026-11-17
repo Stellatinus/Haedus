@@ -302,6 +302,68 @@ public sealed class BridgeDispatcherTests : IDisposable
     }
 
     [Fact]
+    public async Task Benchmark_only_new_measures_the_models_without_a_valid_measurement_and_keeps_the_others()
+    {
+        async Task RunAndWait(object? payload, int completedEvents)
+        {
+            _shell.NextOpen = _dir.File("riferimento.wav", TestData.Wav(16000, 1, 12));
+            Ok(await Call("benchmark.start", payload));
+            for (var i = 0; i < 200 && _shell.Events.Count(e => e.GetProperty("event").GetString() == "benchmark.completed") < completedEvents; i++)
+                await Task.Delay(25);
+        }
+
+        _shell.NextOpen = _dir.File("base.bin", ModelContent);
+        Ok(await Call("models.import"));
+        await RunAndWait(null, 1);
+        var first = Assert.Single(Ok(await Call("benchmark.get")).GetProperty("entries").EnumerateArray());
+        var baseMeasuredAt = first.GetProperty("measuredAt").GetString();
+
+        // Con un solo modello già misurato non c'è niente di nuovo da provare.
+        Assert.Equal(ErrorCodes.BenchmarkNothingNew, ErrorCode(await Call("benchmark.start", new { onlyNew = true })));
+
+        _shell.NextOpen = _dir.File("small.bin", TestData.Bytes("s"));
+        Ok(await Call("models.import"));
+        await RunAndWait(new { onlyNew = true }, 2);
+
+        var outcomes = _shell.Events.Last(e => e.GetProperty("event").GetString() == "benchmark.completed").GetProperty("payload").GetProperty("outcomes").EnumerateArray().ToList();
+        Assert.All(outcomes, o => Assert.Equal("small", o.GetProperty("modelId").GetString()));
+        var entries = Ok(await Call("benchmark.get")).GetProperty("entries").EnumerateArray().ToList();
+        Assert.Equal(["base", "small"], entries.Select(e => e.GetProperty("modelId").GetString()!).Order());
+        Assert.Equal(baseMeasuredAt, entries.Single(e => e.GetProperty("modelId").GetString() == "base").GetProperty("measuredAt").GetString());
+        Assert.All(entries, e => Assert.Equal("none", e.GetProperty("stale").GetString()));
+
+        // Senza la richiesta «solo i nuovi» il test rifà tutto da capo.
+        await RunAndWait(null, 3);
+        var all = _shell.Events.Last(e => e.GetProperty("event").GetString() == "benchmark.completed").GetProperty("payload").GetProperty("outcomes").EnumerateArray().ToList();
+        Assert.Equal(["base", "small"], all.Select(o => o.GetProperty("modelId").GetString()!).Order());
+    }
+
+    [Fact]
+    public async Task Benchmark_only_new_with_official_clips_measures_only_the_missing_model_clip_pairs()
+    {
+        _shell.NextOpen = _dir.File("base.bin", ModelContent);
+        Ok(await Call("models.import"));
+        Ok(await Call("benchmark.start", new { useReference = true }));
+        await _shell.WaitForEventAsync("benchmark.completed");
+        Assert.Equal(ErrorCodes.BenchmarkNothingNew, ErrorCode(await Call("benchmark.start", new { useReference = true, onlyNew = true })));
+
+        // Un brano pubblicato dopo il test: per Base non ha ancora una misura.
+        var missing = BenchmarkClips.All[0].Id;
+        new BenchmarkStore(Path.Combine(_dir.AppPaths().Root, "benchmark.json")).RemoveWhere(e => e.ClipId == missing);
+        var before = Ok(await Call("benchmark.get")).GetProperty("entries").EnumerateArray().ToDictionary(e => e.GetProperty("clipId").GetString()!, e => e.GetProperty("measuredAt").GetString());
+
+        Ok(await Call("benchmark.start", new { useReference = true, onlyNew = true }));
+        for (var i = 0; i < 200 && _shell.Events.Count(e => e.GetProperty("event").GetString() == "benchmark.completed") < 2; i++)
+            await Task.Delay(25);
+        var outcomes = _shell.Events.Last(e => e.GetProperty("event").GetString() == "benchmark.completed").GetProperty("payload").GetProperty("outcomes").EnumerateArray().ToList();
+        Assert.Equal(missing, Assert.Single(outcomes).GetProperty("clipId").GetString());
+
+        var after = Ok(await Call("benchmark.get")).GetProperty("entries").EnumerateArray().ToDictionary(e => e.GetProperty("clipId").GetString()!, e => e.GetProperty("measuredAt").GetString());
+        Assert.Equal(BenchmarkClips.All.Count, after.Count);
+        Assert.All(before, kv => Assert.Equal(kv.Value, after[kv.Key])); // le altre misure non sono state rifatte
+    }
+
+    [Fact]
     public async Task Benchmark_official_file_is_downloaded_only_on_an_explicit_request_and_then_reused()
     {
         _shell.NextOpen = _dir.File("base.bin", ModelContent);

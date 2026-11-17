@@ -40,4 +40,31 @@ public class BenchmarkVersionTests
         Assert.Equal(BenchmarkStaleReason.None, store.Views("pc-1", _ => "sha-base", BenchmarkVersion.Current).Single().Stale);
         Assert.Equal(BenchmarkStaleReason.TestChanged, store.Views("pc-1", _ => "sha-base", "0-00000000").Single().Stale);
     }
+
+    [Fact]
+    public void A_clip_that_changed_invalidates_only_its_own_measurements()
+    {
+        var store = new BenchmarkStore(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "benchmark.json"));
+        var clips = BenchmarkClips.All.Take(2).ToList();
+        store.Record("pc-1", new BenchmarkEntry("base", "sha-base", "Cpu", null, 60, 2, 4, DateTimeOffset.UtcNow, BenchmarkVersion.Current, 90, clips[0].Id, clips[0].Language, clips[0].ScenarioKey, BenchmarkVersion.ClipFingerprint(clips[0])));
+        store.Record("pc-1", new BenchmarkEntry("base", "sha-base", "Cpu", null, 60, 2, 4, DateTimeOffset.UtcNow, BenchmarkVersion.Current, 90, clips[1].Id, clips[1].Language, clips[1].ScenarioKey, "vecchia-impronta"));
+
+        var views = store.Views("pc-1", _ => "sha-base", BenchmarkVersion.Current);
+        Assert.Equal(BenchmarkStaleReason.None, views.Single(v => v.Entry.ClipId == clips[0].Id).Stale);
+        Assert.Equal(BenchmarkStaleReason.TestChanged, views.Single(v => v.Entry.ClipId == clips[1].Id).Stale);
+    }
+
+    [Fact]
+    public void Measurements_saved_before_3_2_stay_valid_after_the_migration()
+    {
+        var store = new BenchmarkStore(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "benchmark.json"));
+        var clip = BenchmarkClips.All[0];
+        store.Record("pc-1", new BenchmarkEntry("base", "sha-base", "Cpu", null, 60, 2, 4, DateTimeOffset.UtcNow, BenchmarkVersion.Legacy, 90, clip.Id, clip.Language, clip.ScenarioKey));
+        store.Record("pc-1", new BenchmarkEntry("small", "sha-small", "Cpu", null, 60, 2, 4, DateTimeOffset.UtcNow, BenchmarkVersion.Legacy));
+        Assert.All(store.Views("pc-1", id => "sha-" + id, BenchmarkVersion.Current), v => Assert.Equal(BenchmarkStaleReason.TestChanged, v.Stale));
+
+        store.MigrateLegacy();
+
+        Assert.All(store.Views("pc-1", id => "sha-" + id, BenchmarkVersion.Current), v => Assert.Equal(BenchmarkStaleReason.None, v.Stale));
+    }
 }

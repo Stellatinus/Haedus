@@ -28,6 +28,7 @@ public sealed partial class BridgeDispatcher
     private void InitBenchmark()
     {
         _benchmarkResults = new BenchmarkStore(Path.Combine(_paths.Root, "benchmark.json"));
+        _benchmarkResults.MigrateLegacy();
         _benchmark = new BenchmarkRunner(_transcription, _models, _benchmarkResults);
         _benchmarkAudio = new BenchmarkAudioPreparer(_audio, Path.Combine(_paths.Root, "benchmark", "noise"));
         _benchmark.Progress += p => Emit("benchmark.progress", p);
@@ -71,11 +72,24 @@ public sealed partial class BridgeDispatcher
         };
     }
 
+    /// <summary>Le misure ancora valide, per sapere cosa manca: coppie modello-brano e modelli con almeno una misura valida.</summary>
+    private (HashSet<(string ModelId, string? ClipId)> Pairs, HashSet<string> Models) ValidMeasurements()
+    {
+        var (fingerprint, version) = BenchmarkContext();
+        var valid = _benchmarkResults.Views(fingerprint, InstalledIdentity, version).Where(v => v.IsValid).Select(v => v.Entry).ToList();
+        return (valid.Select(e => (e.ModelId, e.ClipId)).ToHashSet(), valid.Select(e => e.ModelId).ToHashSet());
+    }
+
     private async Task<object?> BenchmarkStartAsync(JsonElement? payload, CancellationToken ct)
     {
         EnsureNothingRunning();
-        var request = payload is { ValueKind: JsonValueKind.Object } ? Read<BenchmarkStartRequest>(payload) : new BenchmarkStartRequest(false, null, null);
+        var request = payload is { ValueKind: JsonValueKind.Object } ? Read<BenchmarkStartRequest>(payload) : new BenchmarkStartRequest(false, null, null, false);
         var settings = _settings.Load();
+        // «Solo ciò che manca»: con i brani ufficiali si prova ogni coppia modello-brano senza misura valida (modelli nuovi o brani
+        // nuovi); con un file proprio, i modelli che non hanno nessuna misura valida.
+        var onlyNew = request.OnlyNew == true;
+        var (validPairs, validModels) = onlyNew ? ValidMeasurements() : ([], []);
+        var readyModels = onlyNew ? _models.List().Where(s => s.State is ModelState.Ready).Select(s => s.Model.Id).ToList() : [];
         var jobs = new List<BenchmarkJob>();
         string label;
         if (request.UseReference == true)
@@ -83,12 +97,16 @@ public sealed partial class BridgeDispatcher
             // Il download parte solo da questa richiesta esplicita dell'utente (ADR-0006) e solo dagli indirizzi fissati nel codice.
             var provider = _referenceFile ?? throw new HaedusException(ErrorCodes.NotAvailableOnServer, "File di riferimento non disponibile.");
             // Lingue e condizioni scelte dall'utente; senza scelta vale tutto il catalogo. Si scarica solo ciò che serve ai brani scelti.
-            var selected = BenchmarkClips.All
+            var chosen = BenchmarkClips.All
                 .Where(c => request.Languages is null || request.Languages.Contains(c.Language))
                 .Where(c => request.Scenarios is null || request.Scenarios.Contains(c.ScenarioKey))
                 .ToList();
-            if (selected.Count == 0)
+            if (chosen.Count == 0)
                 throw new HaedusException(ErrorCodes.BenchmarkNothingSelected, "Nessun brano selezionato per il Test bench.");
+            // «Solo ciò che manca»: si scaricano e si provano solo i brani che almeno un modello non ha ancora misurato.
+            var selected = chosen.Where(c => !onlyNew || readyModels.Any(m => !validPairs.Contains((m, c.Id)))).ToList();
+            if (selected.Count == 0)
+                throw new HaedusException(ErrorCodes.BenchmarkNothingNew, "Tutti i modelli installati hanno già una misura valida su questi brani.");
             var files = new Dictionary<string, string>();
             foreach (var source in selected.Select(BenchmarkClips.SourceOf).DistinctBy(c => c.Id))
                 files[source.Id] = await provider.EnsureAsync(source, ct).ConfigureAwait(false);
@@ -102,6 +120,8 @@ public sealed partial class BridgeDispatcher
         }
         else
         {
+            if (onlyNew && readyModels.All(validModels.Contains))
+                throw new HaedusException(ErrorCodes.BenchmarkNothingNew, "Tutti i modelli installati hanno già una misura valida.");
             var path = await _shell.PickAudioFileAsync(ct).ConfigureAwait(false);
             if (path is null)
                 return null;
@@ -117,6 +137,9 @@ public sealed partial class BridgeDispatcher
             label = handle.Info.FileName;
         }
 
+        Func<ModelDescriptor, BenchmarkJob, bool>? include = !onlyNew ? null : (model, job) => job.ClipId is null ? !validModels.Contains(model.Id) : !validPairs.Contains((model.Id, job.ClipId));
+        if (include is not null && !readyModels.Any(id => jobs.Any(j => include(_models.Catalog.Find(id)!, j))))
+            throw new HaedusException(ErrorCodes.BenchmarkNothingNew, "Tutti i modelli installati hanno già una misura valida.");
         var (fingerprint, version) = BenchmarkContext();
         var threads = ThreadLimit();
         CancellationTokenSource cts;
@@ -130,7 +153,7 @@ public sealed partial class BridgeDispatcher
         {
             try
             {
-                var outcomes = await _benchmark.RunAsync(jobs, fingerprint, version, threads, cts.Token).ConfigureAwait(false);
+                var outcomes = await _benchmark.RunAsync(jobs, fingerprint, version, threads, cts.Token, include).ConfigureAwait(false);
                 Emit("benchmark.completed", new { Outcomes = outcomes, Snapshot = BenchmarkSnapshot() });
             }
             catch (OperationCanceledException)
@@ -201,7 +224,7 @@ public sealed partial class BridgeDispatcher
     }
 }
 
-public sealed record BenchmarkStartRequest(bool? UseReference, IReadOnlyList<string>? Languages, IReadOnlyList<string>? Scenarios);
+public sealed record BenchmarkStartRequest(bool? UseReference, IReadOnlyList<string>? Languages, IReadOnlyList<string>? Scenarios, bool? OnlyNew = null);
 
 public sealed record BenchmarkEstimateRequest(string ModelId, IReadOnlyList<double>? Durations);
 
